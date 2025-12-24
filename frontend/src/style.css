@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme Variables */
+:root {
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --border-color: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+}
+
+.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --border-color: #334155;
+  --text-primary: #f1f5f9;
+  --text-muted: #94a3b8;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Custom components */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border-none rounded-xl text-sm font-bold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0;
+  }
+  .btn-primary {
+    @apply bg-gradient-to-r from-accent to-purple text-white shadow-lg shadow-accent/30;
+  }
+  .btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    @apply border-2 border-border;
+  }
+  .btn-success {
+    @apply bg-success text-white;
+  }
+  .btn-warning {
+    @apply bg-warning text-slate-900;
+  }
+  .btn-danger {
+    @apply bg-danger text-white;
+  }
+  .btn-sm {
+    @apply px-4 py-2.5 text-xs;
+  }
+  .btn-block {
+    @apply w-full;
+  }
+
+  .form-input {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+    @apply w-full px-4 py-3.5 rounded-xl text-base transition-all duration-200 focus:outline-none focus:border-accent placeholder:text-slate-500;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    @apply rounded-2xl flex flex-col overflow-hidden;
+  }
+
+  .badge {
+    @apply inline-block px-3 py-1.5 rounded-full text-xs font-bold;
+  }
+  .badge-success {
+    @apply bg-success/15 text-success;
+  }
+  .badge-warning {
+    @apply bg-warning/15 text-warning;
+  }
+  .badge-primary {
+    @apply bg-accent/15 text-accent;
+  }
+}

@@ -1,0 +1,48 @@
+# Bağımlılık ve build dosyaları
+/vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+
+# Test dosyaları
+*.test
+*.out
+
+# IDE dosyaları
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS dosyaları
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Temp dosyaları
+tmp/
+temp/
+
+# Env dosyaları (hassas bilgiler içerebilir)
+.env
+.env.local
+.env.*.local
+
+/web/*
+!web/.gitkeep
+

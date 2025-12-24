@@ -1,0 +1,42 @@
+{
+  "FixedFileInfo": {
+    "FileVersion": {
+      "Major": 1,
+      "Minor": 0,
+      "Patch": 0,
+      "Build": 1
+    },
+    "ProductVersion": {
+      "Major": 1,
+      "Minor": 0,
+      "Patch": 0,
+      "Build": 1
+    },
+    "FileFlagsMask": "3f",
+    "FileFlags ": "00",
+    "FileOS": "040004",
+    "FileType": "01",
+    "FileSubType": "00"
+  },
+  "StringFileInfo": {
+    "Comments": "Oto Parça Sipariş Yönetim Sistemi - Open Source",
+    "CompanyName": "Durasoft",
+    "FileDescription": "Oto Parça Sipariş Sistemi",
+    "FileVersion": "25.12-stable",
+    "InternalName": "OtoParcaSiparis",
+    "LegalCopyright": "Copyright © 2025 Ferhat Duran. MIT License.",
+    "LegalTrademarks": "Durasoft",
+    "OriginalFilename": "OtoParcaSiparis.exe",
+    "PrivateBuild": "",
+    "ProductName": "Oto Parça Sipariş Sistemi",
+    "ProductVersion": "25.12-stable",
+    "SpecialBuild": ""
+  },
+  "VarFileInfo": {
+    "Translation": {
+      "LangID": "041F",
+      "CharsetID": "04B0"
+    }
+  },
+  "IconPath": "assets/App.ico"
+}
