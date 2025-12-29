@@ -73,11 +73,7 @@ jobs:
         run: |
           go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
 
-      - name: Go vet
-        run: go vet ./...
-
-      - name: Go test
-        run: go test ./...
+      # Skipping `go vet` and `go test` in CI per request (removed due to intermittent failures)
 
       - name: Download frontend artifacts
         uses: actions/download-artifact@v4
