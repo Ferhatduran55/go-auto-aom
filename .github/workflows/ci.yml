@@ -31,7 +31,10 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: npm install --no-optional
-
+      - name: Ensure Rollup native binary on Windows
+        if: runner.os == 'Windows'
+        working-directory: frontend
+        run: npm install @rollup/rollup-win32-x64-msvc --no-save
       - name: Build frontend
         working-directory: frontend
         run: npm run build
