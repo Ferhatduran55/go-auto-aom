@@ -3,13 +3,13 @@
     "FileVersion": {
       "Major": 25,
       "Minor": 12,
-      "Patch": 2,
+      "Patch": 3,
       "Build": 0
     },
     "ProductVersion": {
       "Major": 25,
       "Minor": 12,
-      "Patch": 2,
+      "Patch": 3,
       "Build": 0
     },
     "FileFlagsMask": "3f",
@@ -22,7 +22,7 @@
     "Comments": "Istemci tabanli iliskisel yonetim uygulamasi. Dahili siparis, stok ve raporlama sistemiyle birlikte gelir. Open Source - MIT License",
     "CompanyName": "Durasoft",
     "FileDescription": "AutoManagement - Oto Yonetim Sistemi",
-    "FileVersion": "25.12.2",
+    "FileVersion": "25.12.3",
     "InternalName": "AutoManagement",
     "LegalCopyright": "Copyright 2025 Ferhat Duran. MIT License.",
     "LegalTrademarks": "Durasoft",

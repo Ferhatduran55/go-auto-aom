@@ -117,7 +117,7 @@ watch(settings, () => {
 const changelog = [
   {
     version: '25.12.3',
-    status: ['release', 'stable'],
+    status: ['latest', 'stable'],
     date: '2025-12-29',
     changes: [
       'Bleve index adı `auto_management_index` olarak değiştirildi',

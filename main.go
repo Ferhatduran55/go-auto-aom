@@ -32,9 +32,9 @@ import (
 
 // Application metadata - Keep in sync with versioninfo.json
 const (
-	AppName        = "AutoManagement"
-	AppTitle       = "AutoManagement - Oto Yönetim Sistemi"
-  AppVersion     = "25.12.3"
+	AppName    = "AutoManagement"
+	AppTitle   = "AutoManagement - Oto Yönetim Sistemi"
+	AppVersion = "25.12.3"
 )
 
 // Window configuration
@@ -57,7 +57,7 @@ func main() {
 		fmt.Printf("Database error: %v\n", err)
 		return
 	}
-// Legacy migration removed - no action required
+	defer store.Close()
 
 	// Find available port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")

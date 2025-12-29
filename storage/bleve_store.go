@@ -212,7 +212,6 @@ func (s *BleveStore) Close() error {
 
 // Migration code removed per request - legacy migration not required
 
-
 // SaveOrder - Siparişi kaydet (Elasticsearch'teki Index işlemi)
 func (s *BleveStore) SaveOrder(order *Order) error {
 	if order.ID == "" {

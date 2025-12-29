@@ -106,8 +106,10 @@
               <p class="app-subtitle">Oto Yönetim Sistemi</p>
               <p class="app-version">
                 <span class="version-badge">v{{ currentVersion }}</span>
-                <span class="version-label latest">En Son</span>
-                <span class="version-label stable">Kararlı</span>
+                <template v-if="currentStatus && currentStatus.length">
+                  <span v-for="s in currentStatus" :key="s" :class="['version-label', s]">{{ getStatusLabel(s) }}</span>
+                </template>
+                <span v-if="currentDate" class="changelog-date">{{ currentDate }}</span>
               </p>
             </div>
           </div>
@@ -215,7 +217,10 @@ defineEmits(['close'])
 const { settings, changelog, saveSettings, setTheme } = useSettings()
 
 const activeTab = ref('general')
-const currentVersion = '25.12.1'
+// Derive current version and status from changelog (first entry)
+const currentVersion = changelog && changelog.length > 0 ? changelog[0].version : 'N/A'
+const currentStatus = changelog && changelog.length > 0 ? (Array.isArray(changelog[0].status) ? changelog[0].status : [changelog[0].status]) : []
+const currentDate = changelog && changelog.length > 0 ? changelog[0].date : ''
 const restartRequired = ref(false)
 
 // Load developer mode from backend on mount

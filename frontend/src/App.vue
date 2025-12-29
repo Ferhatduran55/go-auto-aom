@@ -280,15 +280,24 @@ const {
   isEditing
 } = useOrder()
 
+// Stock state and helpers
+const { products: stockProducts, loadProducts: loadStockProducts, deleteProduct: deleteStockProduct, loadStockMovements } = useStock()
+
 const { settings } = useSettings()
 const initialLoading = ref(true)
 const showProductForm = ref(false)
 const showBulkEdit = ref(false)
 const showOnlyCriticalStock = ref(false)
+const showStockEntry = ref(false)
+const showStockExit = ref(false)
+const showStockMovements = ref(false)
 const selectedProduct = ref(null)
 const editingProduct = ref(null)
 const bulkEditProducts = ref([])
 const stockListRef = ref(null)
+
+// Toast helper
+const { showToast } = useToast()
 
 const modals = ref(null)
 const ordersListRef = ref(null)
