@@ -8,7 +8,7 @@ on:
 
 jobs:
   frontend:
-    name: Frontend build (Windows)
+    name: Frontend build
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Ensure npm v7 (compatible with Node 18)
+      - name: Ensure npm v7
         run: npm install -g npm@7 || true
 
       - name: Clean potential broken install
@@ -28,7 +28,7 @@ jobs:
           if (Test-Path "frontend\node_modules") { Remove-Item "frontend\node_modules" -Recurse -Force }
           if (Test-Path "frontend\package-lock.json") { Remove-Item "frontend\package-lock.json" -Force }
 
-      - name: Install dependencies (fresh, no optional)
+      - name: Install dependencies
         working-directory: frontend
         run: npm install --no-optional
 
