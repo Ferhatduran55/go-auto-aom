@@ -8,8 +8,8 @@ on:
 
 jobs:
   frontend:
-    name: Frontend build
-    runs-on: ubuntu-latest
+    name: Frontend build (Windows)
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,17 +19,18 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Cache node modules
-        uses: actions/cache@v4
-        with:
-          path: frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+      - name: Upgrade npm to latest
+        run: npm install -g npm@latest
 
-      - name: Install dependencies
+      - name: Clean potential broken install
+        shell: powershell
+        run: |
+          if (Test-Path "frontend\node_modules") { Remove-Item "frontend\node_modules" -Recurse -Force }
+          if (Test-Path "frontend\package-lock.json") { Remove-Item "frontend\package-lock.json" -Force }
+
+      - name: Install dependencies (fresh)
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       - name: Build frontend
         working-directory: frontend
