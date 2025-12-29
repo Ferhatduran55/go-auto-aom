@@ -2,7 +2,7 @@
 
 **İstemci tabanlı ilişkisel yönetim uygulaması.** Sipariş, stok ve raporlama sistemini tek bir masaüstü uygulamasında birleştirir.
 
-![Version](https://img.shields.io/badge/version-25.12.1-blue)
+![Version](https://img.shields.io/badge/version-25.12.3-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey)
 
