@@ -46,7 +46,7 @@ jobs:
           path: web
 
   go-build:
-    name: Go build (Windows)
+    name: Go build
     runs-on: windows-latest
     needs: frontend
     steps:
@@ -78,6 +78,12 @@ jobs:
 
       - name: Go test
         run: go test ./...
+
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-assets
+          path: web
 
       - name: Build Windows executables
         shell: powershell
