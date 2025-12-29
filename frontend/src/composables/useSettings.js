@@ -117,7 +117,7 @@ watch(settings, () => {
 const changelog = [
   {
     version: '25.12.3',
-    status: ['latest', 'stable'],
+    status: ['release', 'stable'],
     date: '2025-12-29',
     changes: [
       'Bleve index adı `auto_management_index` olarak değiştirildi',
@@ -167,7 +167,7 @@ const changelog = [
   },
   {
     version: '25.11',
-    status: ['pre-release', 'incompatible'],
+    status: ['pre-release', 'unstable'],
     date: '2025-11-15',
     changes: [
       'Gelişmiş arama + tarih filtresi birlikte çalışır',
