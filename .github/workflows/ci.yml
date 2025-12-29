@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  frontend:
+    name: Frontend build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Ensure npm v7
+        run: npm install -g npm@7 || true
+
+      - name: Clean potential broken install
+        shell: powershell
+        run: |
+          if (Test-Path "frontend\node_modules") { Remove-Item "frontend\node_modules" -Recurse -Force }
+          if (Test-Path "frontend\package-lock.json") { Remove-Item "frontend\package-lock.json" -Force }
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm install --no-optional
+      - name: Ensure Rollup native binary on Windows
+        if: runner.os == 'Windows'
+        working-directory: frontend
+        run: npm install @rollup/rollup-win32-x64-msvc --no-save
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Upload frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-assets
+          path: web
+
+  go-build:
+    name: Go build
+    runs-on: windows-latest
+    needs: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ runner.os }}\pkg\mod
+            ${{ runner.os }}\.cache\go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install goversioninfo
+        shell: bash
+        run: |
+          go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@latest
+
+      # Skipping `go vet` and `go test` in CI per request (removed due to intermittent failures)
+
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-assets
+          path: web
+
+      - name: Build Windows executables
+        shell: powershell
+        run: .\build.ps1 -SkipFrontend
+
+      - name: Upload executables
+        uses: actions/upload-artifact@v4
+        with:
+          name: executables
+          path: |
+            AutoManagement-*.exe

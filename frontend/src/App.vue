@@ -1,47 +1,144 @@
 <template>
   <div class="min-h-screen flex flex-col transition-colors duration-300" style="background: var(--bg-primary); color: var(--text-primary);">
-    <AppHeader 
-      @showHistory="modals.showHistory()" 
-      @newOrder="handleNewOrder"
-      @showCatalog="showCatalog = true"
-    />
-    
-    <OrderBar />
-    
-    <main class="flex-1 grid grid-cols-[1fr_2fr_1fr] gap-6 p-6 max-w-[1800px] mx-auto w-full">
-      <!-- Left: Product Form -->
-      <ProductForm @clearAll="handleClearAll" />
-      
-      <!-- Center: Order Items -->
-      <OrderItems 
+
+    <!-- Loadout overlay -->
+    <div v-if="initialLoading" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/90">
+      <div class="bg-card p-6 rounded-lg text-center shadow-lg flex flex-col items-center gap-4">
+        <div class="w-12 h-12 border-4 border-accent rounded-full border-t-transparent animate-spin"></div>
+        <div class="text-2xl font-bold">Verileriniz kurtarılıyor</div>
+        <div class="text-sm text-muted">Lütfen bekleyin...</div>
+      </div>
+    </div>
+
+    <!-- Main application content is rendered only after initial loading completes -->
+    <div v-if="!initialLoading">
+      <AppHeader 
+        :activeTab="activeTab"
+        @showHistory="modals.showHistory()" 
         @newOrder="handleNewOrder"
-        @deleteProduct="handleDeleteProduct"
-      />
+        @showCatalog="showCatalog = true"
+        @showSettings="showSettings = true"
+      >
+      <template #kritik-stok>
+        <CriticalStockBadge 
+          @stock-in="handleCriticalStockIn" 
+          @show-all="handleShowAllCriticalStock"
+        />
+      </template>
+    </AppHeader>
+    
+    <!-- Tab Navigation -->
+    <nav class="tab-nav" style="background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+      <div class="max-w-[1800px] mx-auto w-full px-6">
+        <div class="tab-list">
+          <button 
+            @click="activeTab = 'orders'" 
+            :class="['tab-btn', { active: activeTab === 'orders' }]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 16h6"></path>
+              <path d="M19 13v6"></path>
+              <path d="M21 10V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"></path>
+              <path d="M16.5 9.4 7.55 4.24"></path>
+              <polyline points="3.29 7 12 12 20.71 7"></polyline>
+              <line x1="12" y1="22" x2="12" y2="12"></line>
+            </svg>
+            Siparişler
+          </button>
+          <button 
+            @click="activeTab = 'stock'" 
+            :class="['tab-btn', { active: activeTab === 'stock' }]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m7.5 4.27 9 5.15"></path>
+              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+              <path d="m3.3 7 8.7 5 8.7-5"></path>
+              <path d="M12 22V12"></path>
+            </svg>
+            Stok Yönetimi
+          </button>
+          <button 
+            @click="activeTab = 'reports'" 
+            :class="['tab-btn', { active: activeTab === 'reports' }]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3v18h18"></path>
+              <path d="m19 9-5 5-4-4-3 3"></path>
+            </svg>
+            Raporlar
+          </button>
+        </div>
+      </div>
+    </nav>
+    
+    <!-- Siparişler View -->
+    <template v-if="activeTab === 'orders'">
+      <OrderBar />
       
-      <!-- Right: Summary + Orders List -->
-      <div class="flex flex-col gap-4">
-        <!-- Order Summary -->
-        <OrderSummary
-          @saveOrder="handleSaveOrder"
-          @saveAsNew="handleSaveAsNew"
-          @exportTxt="exportTxt"
-          @exportPng="exportPng"
-          @exportTxtWhatsApp="exportTxtWhatsApp"
-          @exportPngWhatsApp="exportPngWhatsApp"
+      <main class="flex-1 grid grid-cols-[1fr_2fr_1fr] gap-6 p-6 max-w-[1800px] mx-auto w-full">
+        <!-- Left: Product Form -->
+        <ProductForm @clearAll="handleClearAll" />
+        
+        <!-- Center: Order Items -->
+        <OrderItems 
+          @newOrder="handleNewOrder"
+          @deleteProduct="handleDeleteProduct"
         />
         
-        <!-- Orders List -->
-        <OrdersList 
-          ref="ordersListRef"
-          :refreshTrigger="refreshTrigger"
-          :advancedSearchResults="advancedResults"
-          @loadOrder="handleLoadOrder"
-          @deleteOrder="handleDeleteOrder"
-          @showAdvancedSearch="modals.showAdvancedSearch()"
-          @clearAdvancedSearch="clearAdvancedResults"
+        <!-- Right: Summary + Orders List -->
+        <div class="flex flex-col gap-4">
+          <!-- Order Summary -->
+          <OrderSummary
+            @saveOrder="handleSaveOrder"
+            @saveAsNew="handleSaveAsNew"
+            @exportTxt="exportTxt"
+            @exportPng="exportPng"
+            @exportTxtWhatsApp="exportTxtWhatsApp"
+            @exportPngWhatsApp="exportPngWhatsApp"
+          />
+          
+          <!-- Orders List -->
+          <OrdersList 
+            ref="ordersListRef"
+            :refreshTrigger="refreshTrigger"
+            :advancedSearchResults="advancedResults"
+            @loadOrder="handleLoadOrder"
+            @deleteOrder="handleDeleteOrder"
+            @showAdvancedSearch="modals.showAdvancedSearch()"
+            @clearAdvancedSearch="clearAdvancedResults"
+          />
+        </div>
+      </main>
+    </template>
+    
+    <!-- Stok Yönetimi View -->
+    <template v-else-if="activeTab === 'stock'">
+      <main class="flex-1 p-6 max-w-[1800px] mx-auto w-full">
+        <StockList
+          ref="stockListRef"
+          :filter-critical="showOnlyCriticalStock"
+          @stock-in="handleStockIn"
+          @stock-out="handleStockOut"
+          @edit-product="handleEditProduct"
+          @delete-product="handleDeleteStockProduct"
+          @movements="handleMovements"
+          @new-product="handleNewProduct"
+          @stokGiris="openBulkStockEntry"
+          @stokCikis="openBulkStockExit"
+          @yeniUrun="handleNewProduct"
+          @bulk-stock-in="handleBulkStockIn"
+          @bulk-stock-out="handleBulkStockOut"
+          @bulk-edit="handleBulkEdit"
         />
-      </div>
-    </main>
+      </main>
+    </template>
+    
+    <!-- Raporlar View -->
+    <template v-else-if="activeTab === 'reports'">
+      <main class="flex-1 p-6 max-w-[1800px] mx-auto w-full">
+        <ReportsView />
+      </main>
+    </template>
     
     <!-- Footer -->
     <footer class="border-t py-3 px-6 text-center text-sm" style="background: var(--bg-secondary); border-color: var(--border-color); color: var(--text-muted);">
@@ -49,7 +146,7 @@
         <span class="opacity-70">🔓 Open Source</span>
         <span class="opacity-50">•</span>
         <span>Sürüm:</span>
-        <span class="font-semibold text-success">25.12-stable</span>
+        <span class="font-semibold text-success">25.12.3</span>
         <span class="opacity-50">•</span>
         <span>Geliştirici:</span>
         <a 
@@ -72,16 +169,7 @@
         </a>
       </div>
       <div class="text-xs opacity-50 mt-1">
-        © 2025 Durasoft • MIT License<br>
-        <b>Son Özellikler:</b>
-        <ul class="list-disc list-inside text-left mx-auto max-w-xl mt-1">
-          <li>Gelişmiş arama + tarih filtresi birlikte çalışır</li>
-          <li>Sipariş kalemlerinde içerik arama, gizlenen ürün sayısı</li>
-          <li>Çoklu seçim ve silme</li>
-          <li>WhatsApp'a resim kopyalama</li>
-          <li>Tema uyumlu toast ve dropdown</li>
-          <li>Karanlık/aydınlık tema desteği</li>
-        </ul>
+        © 2025 Durasoft • MIT License
       </div>
     </footer>
     
@@ -97,7 +185,52 @@
       @updated="handleCatalogUpdated"
     />
     
+    <!-- Stok Modalleri -->
+    <StockEntryModal
+      v-if="showStockEntry"
+      :product="selectedProduct"
+      :products="stockProducts"
+      :bulkProducts="bulkProducts"
+      @close="closeStockModals"
+      @success="handleStockOperationSuccess"
+    />
+    
+    <StockExitModal
+      v-if="showStockExit"
+      :product="selectedProduct"
+      :products="stockProducts"
+      :bulkProducts="bulkProducts"
+      @close="closeStockModals"
+      @success="handleStockOperationSuccess"
+    />
+    
+    <StockMovementsModal
+      v-if="showStockMovements"
+      :product="selectedProduct"
+      @close="showStockMovements = false"
+    />
+    
+    <ProductFormModal
+      v-if="showProductForm"
+      :product="editingProduct"
+      @close="showProductForm = false"
+      @success="handleProductFormSuccess"
+    />
+    
+    <BulkEditModal
+      v-if="showBulkEdit"
+      :products="bulkEditProducts"
+      @close="closeBulkEditModal"
+      @success="handleBulkEditSuccess"
+    />
+    
     <Toast />
+    
+    <SettingsModal
+      v-if="showSettings"
+      @close="showSettings = false"
+    />
+  </div>
   </div>
 </template>
 
@@ -105,6 +238,8 @@
 import { ref, onMounted } from 'vue'
 import { useOrder } from '@/composables/useOrder'
 import { useToast } from '@/composables/useToast'
+import { useStock } from '@/composables/useStock'
+import { useSettings } from '@/composables/useSettings'
 import AppHeader from '@/components/AppHeader.vue'
 import OrderBar from '@/components/OrderBar.vue'
 import ProductForm from '@/components/ProductForm.vue'
@@ -114,8 +249,20 @@ import OrderSummary from '@/components/OrderSummary.vue'
 import Modals from '@/components/Modals.vue'
 import CatalogModal from '@/components/CatalogModal.vue'
 import Toast from '@/components/Toast.vue'
+import SettingsModal from '@/components/SettingsModal.vue'
+// Stok components
+import StockList from '@/components/StockList.vue'
+import StockEntryModal from '@/components/StockEntryModal.vue'
+import StockExitModal from '@/components/StockExitModal.vue'
+import StockMovementsModal from '@/components/StockMovementsModal.vue'
+import ProductFormModal from '@/components/ProductFormModal.vue'
+import BulkEditModal from '@/components/BulkEditModal.vue'
+import CriticalStockBadge from '@/components/CriticalStockBadge.vue'
+import ReportsView from '@/components/ReportsView.vue'
 
 const showCatalog = ref(false)
+const showSettings = ref(false)
+const activeTab = ref('orders') // orders | stock | reports
 
 const { 
   products, 
@@ -133,6 +280,23 @@ const {
   isEditing
 } = useOrder()
 
+// Stock state and helpers
+const { products: stockProducts, loadProducts: loadStockProducts, deleteProduct: deleteStockProduct, loadStockMovements } = useStock()
+
+const { settings } = useSettings()
+const initialLoading = ref(true)
+const showProductForm = ref(false)
+const showBulkEdit = ref(false)
+const showOnlyCriticalStock = ref(false)
+const showStockEntry = ref(false)
+const showStockExit = ref(false)
+const showStockMovements = ref(false)
+const selectedProduct = ref(null)
+const editingProduct = ref(null)
+const bulkEditProducts = ref([])
+const stockListRef = ref(null)
+
+// Toast helper
 const { showToast } = useToast()
 
 const modals = ref(null)
@@ -206,6 +370,10 @@ function handleDeleteOrder(id) {
 }
 
 function handleNewOrder() {
+  // Switch to orders tab first if not already there
+  activeTab.value = 'orders'
+  
+  // Reset order form
   resetOrder()
   showToast('Yeni sipariş başlatıldı')
 }
@@ -543,8 +711,187 @@ function formatPrice(n) {
   return (n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// Init
-onMounted(() => {
-  loadData()
+// Stock Handlers
+function handleStockIn(product) {
+  selectedProduct.value = product
+  showStockEntry.value = true
+}
+
+function handleCriticalStockIn(product) {
+  selectedProduct.value = product
+  showStockEntry.value = true
+}
+
+function handleShowAllCriticalStock() {
+  // Switch to stock tab and filter by critical
+  activeTab.value = 'stock'
+  showOnlyCriticalStock.value = true
+  
+  // Reset after a short delay so it can be triggered again
+  setTimeout(() => {
+    showOnlyCriticalStock.value = false
+  }, 500)
+}
+
+function handleStockOut(product) {
+  selectedProduct.value = product
+  showStockExit.value = true
+}
+
+function handleMovements(product) {
+  selectedProduct.value = product
+  showStockMovements.value = true
+}
+
+function handleNewProduct() {
+  editingProduct.value = null
+  showProductForm.value = true
+}
+
+function handleEditProduct(product) {
+  editingProduct.value = product
+  showProductForm.value = true
+}
+
+function handleDeleteStockProduct(product) {
+  modals.value.showConfirm(
+    'Ürün Silme',
+    `"${product.name}" ürününü silmek istediğinize emin misiniz?`,
+    async () => {
+      const result = await deleteStockProduct(product.id)
+      if (result.error) {
+        showToast(result.error, 'error')
+      } else {
+        showToast('Ürün silindi')
+      }
+    },
+    '🗑️'
+  )
+}
+
+function handleStockOperationSuccess(message) {
+  showToast(message || 'Operation successful')
+  loadStockProducts()
+}
+
+// Bulk stock operations
+const bulkProducts = ref([])
+
+function openBulkStockEntry() {
+  selectedProduct.value = null
+  showStockEntry.value = true
+}
+
+function openBulkStockExit() {
+  selectedProduct.value = null
+  showStockExit.value = true
+}
+
+function handleBulkStockIn(products) {
+  bulkProducts.value = products
+  selectedProduct.value = null
+  showStockEntry.value = true
+}
+
+function handleBulkStockOut(products) {
+  bulkProducts.value = products
+  selectedProduct.value = null
+  showStockExit.value = true
+}
+
+function handleBulkEdit(products) {
+  bulkEditProducts.value = products
+  showBulkEdit.value = true
+}
+
+function closeBulkEditModal() {
+  showBulkEdit.value = false
+  bulkEditProducts.value = []
+}
+
+function handleBulkEditSuccess(message) {
+  showToast(message || 'Ürünler güncellendi')
+  loadStockProducts()
+}
+
+function closeStockModals() {
+  showStockEntry.value = false
+  showStockExit.value = false
+  bulkProducts.value = []
+  selectedProduct.value = null
+}
+function handleProductFormSuccess(message) {
+  showToast(message || 'Operation successful')
+  loadStockProducts()
+}
+
+// Init with loadout overlay
+onMounted(async () => {
+  initialLoading.value = true
+  try {
+    await Promise.all([
+      loadData(),
+      loadStockProducts()
+    ])
+  } catch (e) {
+    // Log but continue to hide overlay so UI is usable
+    console.error('Initial load error:', e)
+  } finally {
+    // ensure overlay hides even if one of the loads fails; keep it visible briefly for UX
+    setTimeout(() => {
+      initialLoading.value = false
+    }, 300)
+  }
 })
 </script>
+
+<style scoped>
+.tab-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.tab-list {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tab-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  background: var(--accent-color);
+  color: white;
+}
+
+.tab-btn.active:hover {
+  background: var(--accent-hover);
+}
+
+.tab-btn svg {
+  opacity: 0.8;
+}
+
+.tab-btn.active svg {
+  opacity: 1;
+}
+</style>

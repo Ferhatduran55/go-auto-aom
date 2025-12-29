@@ -63,7 +63,15 @@
                 <div class="flex-1">
                   <div class="font-bold mb-1" style="color: var(--text-primary);">{{ product.name }}</div>
                   <div class="text-sm" style="color: var(--text-muted);">
-                    OEM: {{ product.oem_number || '-' }} • {{ product.used_count || 0 }}x kullanıldı
+                    OEM: {{ product.oem_number || '-' }} • {{ product.brand || '-' }}
+                  </div>
+                </div>
+                <div class="stock-info">
+                  <div class="stock-current" :class="{ 'stock-critical': product.stock_quantity <= (product.critical_stock || 3) }">
+                    {{ product.stock_quantity || 0 }} {{ product.unit || 'adet' }}
+                  </div>
+                  <div class="stock-critical-level">
+                    Kritik: {{ product.critical_stock || 3 }}
                   </div>
                 </div>
                 <div class="flex gap-2">
@@ -329,5 +337,27 @@ onMounted(() => {
 }
 .tab-btn.active {
   @apply bg-accent text-white border-accent;
+}
+
+.stock-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 80px;
+}
+
+.stock-current {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--success-color);
+}
+
+.stock-current.stock-critical {
+  color: var(--danger-color);
+}
+
+.stock-critical-level {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 </style>

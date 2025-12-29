@@ -88,11 +88,11 @@
         <!-- Parça Durumu -->
         <div class="mb-4">
           <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">Parça Durumu</label>
-          <select v-model="form.partStatus" class="form-input">
-            <option value="original">🟢 Orijinal</option>
-            <option value="used">🟡 Çıkma</option>
-            <option value="zero">🔵 Sıfır</option>
-          </select>
+          <AutocompleteSelect
+            v-model="form.partStatus"
+            :items="partStatusOptions"
+            placeholder="Durum seçin..."
+          />
         </div>
 
         <button type="submit" class="btn btn-primary btn-block">
@@ -149,6 +149,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useOrder } from '@/composables/useOrder'
 import { useToast } from '@/composables/useToast'
+import AutocompleteSelect from './AutocompleteSelect.vue'
 
 const emit = defineEmits(['clearAll'])
 
@@ -162,6 +163,13 @@ const form = reactive({
   unitPrice: '',
   partStatus: 'original'
 })
+
+// Part status options for autocomplete
+const partStatusOptions = [
+  { label: '🟢 Orijinal', value: 'original' },
+  { label: '🟡 Çıkma', value: 'used' },
+  { label: '🔵 Sıfır', value: 'zero' }
+]
 
 const showProductDropdown = ref(false)
 const showOEMDropdown = ref(false)
