@@ -3,8 +3,9 @@
 
     <!-- Loadout overlay -->
     <div v-if="initialLoading" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/90">
-      <div class="bg-card p-6 rounded-lg text-center shadow-lg">
-        <div class="text-2xl font-bold mb-2">Verileriniz kurtarılıyor</div>
+      <div class="bg-card p-6 rounded-lg text-center shadow-lg flex flex-col items-center gap-4">
+        <div class="w-12 h-12 border-4 border-accent rounded-full border-t-transparent animate-spin"></div>
+        <div class="text-2xl font-bold">Verileriniz kurtarılıyor</div>
         <div class="text-sm text-muted">Lütfen bekleyin...</div>
       </div>
     </div>
@@ -145,7 +146,7 @@
         <span class="opacity-70">🔓 Open Source</span>
         <span class="opacity-50">•</span>
         <span>Sürüm:</span>
-        <span class="font-semibold text-success">25.12.2</span>
+        <span class="font-semibold text-success">25.12.3</span>
         <span class="opacity-50">•</span>
         <span>Geliştirici:</span>
         <a 
@@ -229,6 +230,7 @@
       v-if="showSettings"
       @close="showSettings = false"
     />
+  </div>
   </div>
 </template>
 

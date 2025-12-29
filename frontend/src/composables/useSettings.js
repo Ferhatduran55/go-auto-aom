@@ -116,13 +116,24 @@ watch(settings, () => {
 // - pre-release: Ön Sürüm (amber)
 const changelog = [
   {
-    version: '25.12.2',
+    version: '25.12.3',
     status: ['latest', 'stable'],
+    date: '2025-12-29',
+    changes: [
+      'Bleve index adı `auto_management_index` olarak değiştirildi',
+      'Legacy migration tamamen kaldırıldı',
+      'Loadout ekranı yeniden tasarlandı; spinner eklendi ve UI yükleme tamamlanana kadar içerik gizleniyor',
+      'Frontend template fix ve kritik build hataları düzeltildi',
+      'Genel kararlılık ve sürüm güncellemesi'
+    ]
+  },
+  {
+    version: '25.12.2',
+    status: ['pre-release', 'unstable'],
     date: '2025-12-29',
     changes: [
       'Yeni kayıt sırasında input artık boşalmıyor ve v-model hemen güncelleniyor',
       'Yeni oluşturulan kategori/marka uygulama listelerine ekleniyor',
-      'Eski tabloları yeni formata migrate edecek tek seferlik göç fonksiyonu eklendi',
       'Loadout screen eklendi'
     ]
   },

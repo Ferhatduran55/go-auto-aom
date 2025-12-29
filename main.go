@@ -34,7 +34,7 @@ import (
 const (
 	AppName        = "AutoManagement"
 	AppTitle       = "AutoManagement - Oto Yönetim Sistemi"
-  AppVersion     = "25.12.2"
+  AppVersion     = "25.12.3"
 )
 
 // Window configuration
@@ -57,10 +57,7 @@ func main() {
 		fmt.Printf("Database error: %v\n", err)
 		return
 	}
-// Run a one-time migration from legacy OtoParcaSiparis data (if present)
-if err := store.MigrateOldOtoParcaSiparis(); err != nil {
-  fmt.Printf("Migration error: %v\n", err)
-}
+// Legacy migration removed - no action required
 
 	// Find available port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
