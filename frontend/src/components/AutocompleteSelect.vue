@@ -297,7 +297,11 @@ function clearSelection() {
 }
 
 function createItem() {
-  emit('create', searchQuery.value)
+  const val = searchQuery.value
+  emit('create', val)
+  // Immediately update v-model so parent gets the value (helps UX when items aren't yet reloaded)
+  emit('update:modelValue', val)
+  // close dropdown but keep the typed query visible until parent updates items
   isOpen.value = false
 }
 
@@ -372,9 +376,11 @@ function handleClickOutside(e) {
 watch(() => props.modelValue, (newVal) => {
   if (selectedItem.value) {
     searchQuery.value = getDisplayText(selectedItem.value)
-  } else {
+  } else if (newVal === null || newVal === undefined || newVal === '') {
+    // only clear when model is explicitly emptied
     searchQuery.value = ''
   }
+  // otherwise keep user's typed query (e.g., when creating a new item that isn't yet in the items list)
 }, { immediate: true })
 
 // Reset highlighted index when filtered items change

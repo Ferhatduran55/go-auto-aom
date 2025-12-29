@@ -210,6 +210,147 @@ func (s *BleveStore) Close() error {
 	return s.index.Close()
 }
 
+// MigrateOldOtoParcaSiparis - Tek seferlik göç: eski OtoParcaSiparis JSON/sınıf biçimindeki verileri
+// yeni Order yapısına çevirir ve kaydeder. İşlem bir kez çalıştırılacak şekilde bir "flag" dosyası bırakır.
+func (s *BleveStore) MigrateOldOtoParcaSiparis() error {
+	flagFile := filepath.Join(s.dataPath, ".migrated_otoparca_siparis")
+	if _, err := os.Stat(flagFile); err == nil {
+		// migration already done
+		return nil
+	}
+
+	checked := false
+	candidates := []string{
+		filepath.Join(s.dataPath, "OtoParcaSiparis.json"),
+		filepath.Join(s.dataPath, "otoparcasiparis.json"),
+		filepath.Join(s.dataPath, "old_orders.json"),
+		filepath.Join(s.dataPath, "orders_old.json"),
+	}
+
+	for _, p := range candidates {
+		if _, err := os.Stat(p); err == nil {
+			checked = true
+			data, err := os.ReadFile(p)
+			if err != nil {
+				continue
+			}
+
+			// try array of orders
+			var arr []map[string]interface{}
+			if err := json.Unmarshal(data, &arr); err == nil {
+				for _, obj := range arr {
+					order := mapLegacyToOrder(obj)
+					if order != nil {
+						if err := s.SaveOrder(order); err != nil {
+							fmt.Printf("migration save error: %v\n", err)
+						}
+					}
+				}
+				continue
+			}
+
+			// try single object
+			var obj map[string]interface{}
+			if err := json.Unmarshal(data, &obj); err == nil {
+				order := mapLegacyToOrder(obj)
+				if order != nil {
+					if err := s.SaveOrder(order); err != nil {
+						fmt.Printf("migration save error: %v\n", err)
+					}
+				}
+			}
+		}
+	}
+
+	// check directory
+	dir := filepath.Join(s.dataPath, "OtoParcaSiparis")
+	if entries, err := os.ReadDir(dir); err == nil {
+		checked = true
+		for _, e := range entries {
+			if e.IsDir() || !strings.HasSuffix(e.Name(), ".json") {
+				continue
+			}
+			p := filepath.Join(dir, e.Name())
+			data, err := os.ReadFile(p)
+			if err != nil {
+				continue
+			}
+			var obj map[string]interface{}
+			if err := json.Unmarshal(data, &obj); err == nil {
+				order := mapLegacyToOrder(obj)
+				if order != nil {
+					if err := s.SaveOrder(order); err != nil {
+						fmt.Printf("migration save error: %v\n", err)
+					}
+				}
+			}
+		}
+	}
+
+	// Write flag (even if nothing found) to avoid repeated checks
+	_ = os.WriteFile(flagFile, []byte(time.Now().Format(time.RFC3339)), 0644)
+
+	if !checked {
+		// nothing found - that's fine
+	}
+
+	return nil
+}
+
+// mapLegacyToOrder tries to map a loosely-typed legacy object to Order
+func mapLegacyToOrder(obj map[string]interface{}) *Order {
+	if obj == nil {
+		return nil
+	}
+
+	order := NewOrder()
+	if v, ok := obj["id"].(string); ok && v != "" {
+		order.ID = v
+	}
+	if v, ok := obj["order_id"].(string); ok && v != "" {
+		order.ID = v
+	}
+	if v, ok := obj["title"].(string); ok {
+		order.Title = v
+	} else if v, ok := obj["customer_name"].(string); ok && v != "" {
+		order.Title = "Şipariş - " + v
+	} else if v, ok := obj["created_at"].(string); ok {
+		order.Title = "Eski Sipariş " + v
+	}
+
+	if v, ok := obj["customer"].(string); ok {
+		order.CustomerName = v
+	} else if v, ok := obj["customer_name"].(string); ok {
+		order.CustomerName = v
+	}
+
+	// Items
+	if itemsRaw, ok := obj["items"]; ok {
+		switch items := itemsRaw.(type) {
+		case []interface{}:
+			for _, it := range items {
+				if m, ok := it.(map[string]interface{}); ok {
+					name := ""
+					if n, ok := m["product_name"].(string); ok { name = n }
+					if n, ok := m["name"].(string); ok && name == "" { name = n }
+
+					oItem := NewOrderItem(name, "", 1, 0, "original")
+					if q, ok := m["quantity"].(float64); ok { oItem.Quantity = int(q) }
+					if q, ok := m["qty"].(float64); ok { oItem.Quantity = int(q) }
+					if p, ok := m["unit_price"].(float64); ok { oItem.UnitPrice = p }
+					if oem, ok := m["oem"].(string); ok { oItem.OEMNumber = oem }
+					if ps, ok := m["part_status"].(string); ok { oItem.PartStatus = ps }
+					oItem.CalculateTotalPrice()
+					order.Items = append(order.Items, oItem)
+				}
+			}
+		}
+	}
+
+	order.CalculateGrandTotal()
+	return order
+}
+
 // SaveOrder - Siparişi kaydet (Elasticsearch'teki Index işlemi)
 func (s *BleveStore) SaveOrder(order *Order) error {
 	if order.ID == "" {

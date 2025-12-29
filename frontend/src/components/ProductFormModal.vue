@@ -195,11 +195,17 @@ const unitOptions = [
 
 // Handle new category creation
 function handleNewCategory(name) {
+  if (!categories.value.includes(name)) {
+    categories.value.unshift(name)
+  }
   form.value.category = name
 }
 
 // Handle new brand creation
 function handleNewBrand(name) {
+  if (!brands.value.includes(name)) {
+    brands.value.unshift(name)
+  }
   form.value.brand = name
 }
 

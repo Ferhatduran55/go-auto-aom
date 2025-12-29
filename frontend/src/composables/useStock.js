@@ -343,6 +343,7 @@ const initialLoad = async () => {
   await Promise.all([
     loadProducts(),
     loadCategories(),
+    loadBrands(),
     loadUnits()
   ])
 }

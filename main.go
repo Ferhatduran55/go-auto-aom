@@ -34,10 +34,7 @@ import (
 const (
 	AppName        = "AutoManagement"
 	AppTitle       = "AutoManagement - Oto Yönetim Sistemi"
-	AppVersion     = "25.12.1"
-	AppDescription = "Client-based relational management application"
-	AppCompany     = "Durasoft"
-	AppCopyright   = "Copyright 2025 Ferhat Duran. MIT License."
+  AppVersion     = "25.12.2"
 )
 
 // Window configuration
@@ -60,7 +57,10 @@ func main() {
 		fmt.Printf("Database error: %v\n", err)
 		return
 	}
-	defer store.Close()
+// Run a one-time migration from legacy OtoParcaSiparis data (if present)
+if err := store.MigrateOldOtoParcaSiparis(); err != nil {
+  fmt.Printf("Migration error: %v\n", err)
+}
 
 	// Find available port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")

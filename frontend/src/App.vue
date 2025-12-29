@@ -1,12 +1,23 @@
 <template>
   <div class="min-h-screen flex flex-col transition-colors duration-300" style="background: var(--bg-primary); color: var(--text-primary);">
-    <AppHeader 
-      :activeTab="activeTab"
-      @showHistory="modals.showHistory()" 
-      @newOrder="handleNewOrder"
-      @showCatalog="showCatalog = true"
-      @showSettings="showSettings = true"
-    >
+
+    <!-- Loadout overlay -->
+    <div v-if="initialLoading" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/90">
+      <div class="bg-card p-6 rounded-lg text-center shadow-lg">
+        <div class="text-2xl font-bold mb-2">Verileriniz kurtarılıyor</div>
+        <div class="text-sm text-muted">Lütfen bekleyin...</div>
+      </div>
+    </div>
+
+    <!-- Main application content is rendered only after initial loading completes -->
+    <div v-if="!initialLoading">
+      <AppHeader 
+        :activeTab="activeTab"
+        @showHistory="modals.showHistory()" 
+        @newOrder="handleNewOrder"
+        @showCatalog="showCatalog = true"
+        @showSettings="showSettings = true"
+      >
       <template #kritik-stok>
         <CriticalStockBadge 
           @stock-in="handleCriticalStockIn" 
@@ -134,7 +145,7 @@
         <span class="opacity-70">🔓 Open Source</span>
         <span class="opacity-50">•</span>
         <span>Sürüm:</span>
-        <span class="font-semibold text-success">25.12.1</span>
+        <span class="font-semibold text-success">25.12.2</span>
         <span class="opacity-50">•</span>
         <span>Geliştirici:</span>
         <a 
@@ -226,6 +237,7 @@ import { ref, onMounted } from 'vue'
 import { useOrder } from '@/composables/useOrder'
 import { useToast } from '@/composables/useToast'
 import { useStock } from '@/composables/useStock'
+import { useSettings } from '@/composables/useSettings'
 import AppHeader from '@/components/AppHeader.vue'
 import OrderBar from '@/components/OrderBar.vue'
 import ProductForm from '@/components/ProductForm.vue'
@@ -266,20 +278,8 @@ const {
   isEditing
 } = useOrder()
 
-const { showToast } = useToast()
-
-// Stock state and functions
-const { 
-  products: stockProducts,
-  loadProducts: loadStockProducts,
-  deleteProduct: deleteStockProduct,
-  loadStockMovements
-} = useStock()
-
-// Stock modal state
-const showStockEntry = ref(false)
-const showStockExit = ref(false)
-const showStockMovements = ref(false)
+const { settings } = useSettings()
+const initialLoading = ref(true)
 const showProductForm = ref(false)
 const showBulkEdit = ref(false)
 const showOnlyCriticalStock = ref(false)
@@ -814,10 +814,23 @@ function handleProductFormSuccess(message) {
   loadStockProducts()
 }
 
-// Init
-onMounted(() => {
-  loadData()
-  loadStockProducts()
+// Init with loadout overlay
+onMounted(async () => {
+  initialLoading.value = true
+  try {
+    await Promise.all([
+      loadData(),
+      loadStockProducts()
+    ])
+  } catch (e) {
+    // Log but continue to hide overlay so UI is usable
+    console.error('Initial load error:', e)
+  } finally {
+    // ensure overlay hides even if one of the loads fails; keep it visible briefly for UX
+    setTimeout(() => {
+      initialLoading.value = false
+    }, 300)
+  }
 })
 </script>
 

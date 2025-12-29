@@ -5,6 +5,8 @@ const settings = ref({
   // Display settings
   itemsPerPage: 25,
   theme: 'dark',
+  // Show loadout overlay on every app start (optional)
+  showLoadoutAlways: false,
   
   // Stock settings
   autoDeductStock: false,
@@ -114,8 +116,19 @@ watch(settings, () => {
 // - pre-release: Ön Sürüm (amber)
 const changelog = [
   {
-    version: '25.12.1',
+    version: '25.12.2',
     status: ['latest', 'stable'],
+    date: '2025-12-29',
+    changes: [
+      'Yeni kayıt sırasında input artık boşalmıyor ve v-model hemen güncelleniyor',
+      'Yeni oluşturulan kategori/marka uygulama listelerine ekleniyor',
+      'Eski tabloları yeni formata migrate edecek tek seferlik göç fonksiyonu eklendi',
+      'Loadout screen eklendi'
+    ]
+  },
+  {
+    version: '25.12.1',
+    status: ['pre-release', 'unstable'],
     date: '2025-12-29',
     changes: [
       'Stok ve Raporlama sistemi',
