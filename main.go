@@ -17,11 +17,35 @@ import (
 	"github.com/jchv/go-webview2"
 )
 
-// ============================================
-// Oto Parça Sipariş Sistemi - Masaüstü Uygulaması
-// Bleve (gömülü Elasticsearch) + WebView2 GUI
-// Tek EXE - Bağımlılık yok (Windows 10/11 WebView2 Runtime içerir)
-// ============================================
+// =============================================================================
+// AutoManagement - Desktop Application
+// Client-based relational management application with integrated
+// order, stock, and reporting system.
+//
+// Tech Stack:
+//   - Backend: Go + Bleve (embedded full-text search engine)
+//   - Frontend: Vue.js 3 + TailwindCSS + Vite
+//   - GUI: WebView2 (Windows native)
+//   - Distribution: Single EXE, no external dependencies
+//
+// =============================================================================
+
+// Application metadata - Keep in sync with versioninfo.json
+const (
+	AppName        = "AutoManagement"
+	AppTitle       = "AutoManagement - Oto Yönetim Sistemi"
+	AppVersion     = "25.12.1"
+	AppDescription = "Client-based relational management application"
+	AppCompany     = "Durasoft"
+	AppCopyright   = "Copyright 2025 Ferhat Duran. MIT License."
+)
+
+// Window configuration
+const (
+	WindowWidth  = 1400
+	WindowHeight = 900
+	WindowIconID = 1 // Resource ID from versioninfo.json
+)
 
 //go:embed web/*
 var webFS embed.FS
@@ -29,76 +53,126 @@ var webFS embed.FS
 var store *storage.BleveStore
 
 func main() {
-	// Bleve store başlat
+	// Initialize Bleve store
 	var err error
 	store, err = storage.NewBleveStore()
 	if err != nil {
-		fmt.Printf("Veritabanı hatası: %v\n", err)
+		fmt.Printf("Database error: %v\n", err)
 		return
 	}
 	defer store.Close()
 
-	// Boş port bul
+	// Find available port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		fmt.Printf("Port bulunamadı: %v\n", err)
+		fmt.Printf("Failed to find available port: %v\n", err)
 		return
 	}
 	port := listener.Addr().(*net.TCPAddr).Port
 	listener.Close()
 
-	// HTTP sunucu başlat
+	// Start HTTP server
 	go startServer(port)
 	time.Sleep(100 * time.Millisecond)
 
-	// WebView2 oluştur
+	// Check if developer mode is enabled from settings
+	debugMode := storage.IsDeveloperMode()
+
+	// Create WebView2 window
 	w := webview2.NewWithOptions(webview2.WebViewOptions{
-		Debug:     false,
+		Debug:     debugMode,
 		AutoFocus: true,
 		WindowOptions: webview2.WindowOptions{
-			Title:  "Oto Parça Sipariş Sistemi",
-			Width:  1400,
-			Height: 900,
-			IconId: 1, // versioninfo.json'daki icon resource ID
+			Title:  AppTitle,
+			Width:  WindowWidth,
+			Height: WindowHeight,
+			IconId: WindowIconID,
 			Center: true,
 		},
 	})
 	if w == nil {
-		// WebView2 yüklü değilse kullanıcıya bilgi ver
-		showErrorDialog("WebView2 Runtime Gerekli",
-			"Bu uygulamayı çalıştırmak için Microsoft WebView2 Runtime gereklidir.\n\n"+
-				"Tamam'a tıklayarak indirme sayfasını açabilirsiniz.\n\n"+
-				"İndirme sayfası: https://go.microsoft.com/fwlink/p/?LinkId=2124703")
+		// WebView2 Runtime is not installed
+		showErrorDialog("WebView2 Runtime Required",
+			"Microsoft WebView2 Runtime is required to run this application.\n\n"+
+				"Click OK to open the download page.\n\n"+
+				"Download: https://go.microsoft.com/fwlink/p/?LinkId=2124703")
 
-		// WebView2 indirme sayfasını aç
+		// Open WebView2 download page
 		exec.Command("cmd", "/c", "start", "https://go.microsoft.com/fwlink/p/?LinkId=2124703").Start()
 		return
 	}
 	defer w.Destroy()
 
-	// JavaScript'ten Go fonksiyonlarını çağır
+	// Bind Go functions to JavaScript
+	bindOrderFunctions(w)
+	bindCustomerFunctions(w)
+	bindProductFunctions(w)
+	bindStockFunctions(w)
+	bindSettingsFunctions(w)
+
+	w.Navigate(fmt.Sprintf("http://127.0.0.1:%d/", port))
+	w.Run()
+}
+
+// =============================================================================
+// Function Bindings
+// =============================================================================
+
+// bindOrderFunctions binds order-related functions to WebView
+func bindOrderFunctions(w webview2.WebView) {
 	w.Bind("saveOrderToBleve", saveOrderToBleve)
 	w.Bind("loadOrdersFromBleve", loadOrdersFromBleve)
 	w.Bind("loadOrderById", loadOrderById)
 	w.Bind("deleteOrderFromBleve", deleteOrderFromBleve)
 	w.Bind("searchOrders", searchOrders)
 	w.Bind("searchOrdersAdvanced", searchOrdersAdvanced)
+}
+
+// bindCustomerFunctions binds customer-related functions to WebView
+func bindCustomerFunctions(w webview2.WebView) {
 	w.Bind("searchCustomers", searchCustomers)
 	w.Bind("getCustomerOrders", getCustomerOrders)
 	w.Bind("listAllCustomers", listAllCustomers)
+	w.Bind("updateCustomer", updateCustomer)
+	w.Bind("deleteCustomer", deleteCustomer)
+}
+
+// bindProductFunctions binds product-related functions to WebView
+func bindProductFunctions(w webview2.WebView) {
 	w.Bind("searchProducts", searchProducts)
 	w.Bind("listAllProducts", listAllProducts)
+	w.Bind("listProductsPaginated", listProductsPaginated)
 	w.Bind("saveProduct", saveProduct)
 	w.Bind("updateProduct", updateProduct)
 	w.Bind("deleteProduct", deleteProduct)
-	w.Bind("updateCustomer", updateCustomer)
-	w.Bind("deleteCustomer", deleteCustomer)
-
-	w.Navigate(fmt.Sprintf("http://127.0.0.1:%d/", port))
-	w.Run()
+	w.Bind("createProductFull", createProductFull)
+	w.Bind("getCategories", getCategories)
+	w.Bind("getBrands", getBrands)
+	w.Bind("getUnits", getUnits)
 }
 
-// HTTP sunucu - web dosyalarını sunar
+// bindStockFunctions binds stock management functions to WebView
+func bindStockFunctions(w webview2.WebView) {
+	w.Bind("stockIn", stockIn)
+	w.Bind("stockOut", stockOut)
+	w.Bind("bulkStockIn", bulkStockIn)
+	w.Bind("bulkStockOut", bulkStockOut)
+	w.Bind("getStockMovements", getStockMovements)
+	w.Bind("getCriticalStockProducts", getCriticalStockProducts)
+	w.Bind("getStockReport", getStockReport)
+}
+
+// bindSettingsFunctions binds settings functions to WebView
+func bindSettingsFunctions(w webview2.WebView) {
+	w.Bind("setDeveloperMode", setDeveloperMode)
+	w.Bind("getDeveloperMode", getDeveloperMode)
+}
+
+// =============================================================================
+// HTTP Server
+// =============================================================================
+
+// startServer starts the embedded HTTP server for serving web files
 func startServer(port int) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
@@ -112,7 +186,7 @@ func startServer(port int) {
 			return
 		}
 
-		// Content type belirle
+		// Set Content-Type header
 		switch {
 		case strings.HasSuffix(path, ".html"):
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -124,6 +198,12 @@ func startServer(port int) {
 			w.Header().Set("Content-Type", "image/png")
 		case strings.HasSuffix(path, ".ico"):
 			w.Header().Set("Content-Type", "image/x-icon")
+		case strings.HasSuffix(path, ".svg"):
+			w.Header().Set("Content-Type", "image/svg+xml")
+		case strings.HasSuffix(path, ".json"):
+			w.Header().Set("Content-Type", "application/json")
+		case strings.HasSuffix(path, ".woff"), strings.HasSuffix(path, ".woff2"):
+			w.Header().Set("Content-Type", "font/woff2")
 		}
 
 		w.Write(content)
@@ -132,11 +212,11 @@ func startServer(port int) {
 	http.ListenAndServe(fmt.Sprintf("127.0.0.1:%d", port), nil)
 }
 
-// ============================================
-// JavaScript'ten çağrılan Go fonksiyonları
-// ============================================
+// =============================================================================
+// Order Functions
+// =============================================================================
 
-// saveOrderToBleve - Siparişi Bleve'e kaydet (yeni veya güncelleme)
+// saveOrderToBleve saves or updates an order in the Bleve store
 func saveOrderToBleve(orderJSON string) string {
 	var orderData struct {
 		ID            string              `json:"id"`
@@ -148,10 +228,10 @@ func saveOrderToBleve(orderJSON string) string {
 	}
 
 	if err := json.Unmarshal([]byte(orderJSON), &orderData); err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
 
-	// Müşteri varsa al veya oluştur (ID bazlı)
+	// Get or create customer if name is provided
 	var customerID string
 	if orderData.CustomerName != "" {
 		customer, err := store.GetOrCreateCustomer(orderData.CustomerName, orderData.CustomerPhone, orderData.CustomerID)
@@ -163,7 +243,7 @@ func saveOrderToBleve(orderJSON string) string {
 	var order *storage.Order
 	var err error
 
-	// ID varsa güncelleme, yoksa yeni kayıt
+	// Update existing or create new order
 	if orderData.ID != "" {
 		order, err = store.GetOrder(orderData.ID)
 		if err != nil {
@@ -179,19 +259,19 @@ func saveOrderToBleve(orderJSON string) string {
 	order.Items = orderData.Items
 	order.CalculateGrandTotal()
 
-	// ID varsa güncelle, yoksa yeni kaydet
+	// Save or update order
 	if orderData.ID != "" && err == nil {
 		order.ID = orderData.ID
 		if err := store.UpdateOrder(order); err != nil {
-			return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+			return jsonError(err)
 		}
 	} else {
 		if err := store.SaveOrder(order); err != nil {
-			return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+			return jsonError(err)
 		}
 	}
 
-	// Müşteri istatistiklerini güncelle
+	// Update customer statistics
 	if customerID != "" {
 		store.UpdateCustomerStats(customerID)
 	}
@@ -199,7 +279,7 @@ func saveOrderToBleve(orderJSON string) string {
 	return fmt.Sprintf(`{"success": true, "id": "%s", "customer_id": "%s"}`, order.ID, customerID)
 }
 
-// loadOrdersFromBleve - Siparişleri yükle (filtre ile)
+// loadOrdersFromBleve loads orders with optional filtering
 func loadOrdersFromBleve(filterJSON string) string {
 	var filter struct {
 		Type      string `json:"type"`
@@ -207,7 +287,7 @@ func loadOrdersFromBleve(filterJSON string) string {
 		EndDate   string `json:"end_date"`
 	}
 
-	// Eski format desteği (sadece string)
+	// Support legacy string format
 	if !strings.HasPrefix(filterJSON, "{") {
 		filter.Type = filterJSON
 	} else {
@@ -224,7 +304,7 @@ func loadOrdersFromBleve(filterJSON string) string {
 		startDate, _ := time.Parse("2006-01-02", filter.StartDate)
 		endDate, _ := time.Parse("2006-01-02", filter.EndDate)
 		if startDate.IsZero() {
-			startDate = time.Now().AddDate(0, -1, 0) // Son 1 ay
+			startDate = time.Now().AddDate(0, -1, 0) // Last month
 		}
 		if endDate.IsZero() {
 			endDate = time.Now()
@@ -237,45 +317,39 @@ func loadOrdersFromBleve(filterJSON string) string {
 	}
 
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
 
-	data, _ := json.Marshal(orders)
-	return string(data)
+	return jsonMarshal(orders)
 }
 
-// loadOrderById - ID'ye göre sipariş yükle
+// loadOrderById loads a single order by ID
 func loadOrderById(id string) string {
 	order, err := store.GetOrder(id)
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
-
-	data, _ := json.Marshal(order)
-	return string(data)
+	return jsonMarshal(order)
 }
 
-// deleteOrderFromBleve - Siparişi sil
+// deleteOrderFromBleve deletes an order by ID
 func deleteOrderFromBleve(id string) string {
 	if err := store.DeleteOrder(id); err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
-
-	return `{"success": true}`
+	return jsonSuccess()
 }
 
-// searchOrders - Siparişlerde arama yap
+// searchOrders searches orders by term
 func searchOrders(searchTerm string) string {
 	orders, err := store.SearchOrders(searchTerm)
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
-
-	data, _ := json.Marshal(orders)
-	return string(data)
+	return jsonMarshal(orders)
 }
 
-// searchOrdersAdvanced - Gelişmiş sipariş arama
+// searchOrdersAdvanced performs advanced order search with multiple filters
 func searchOrdersAdvanced(filterJSON string) string {
 	var filter struct {
 		ProductName  string  `json:"product_name"`
@@ -293,7 +367,7 @@ func searchOrdersAdvanced(filterJSON string) string {
 	}
 
 	if err := json.Unmarshal([]byte(filterJSON), &filter); err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
 
 	orders, err := store.SearchOrdersAdvanced(
@@ -311,82 +385,138 @@ func searchOrdersAdvanced(filterJSON string) string {
 		filter.EndDate,
 	)
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
 
-	data, _ := json.Marshal(orders)
-	return string(data)
+	return jsonMarshal(orders)
 }
 
-// searchCustomers - Müşteri ara (autocomplete için)
+// =============================================================================
+// Customer Functions
+// =============================================================================
+
+// searchCustomers searches customers for autocomplete
 func searchCustomers(searchTerm string) string {
 	customers, err := store.SearchCustomers(searchTerm)
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
-
-	data, _ := json.Marshal(customers)
-	return string(data)
+	return jsonMarshal(customers)
 }
 
-// listAllCustomers - Tüm müşterileri listele
+// listAllCustomers returns all customers
 func listAllCustomers() string {
 	customers, err := store.ListCustomers()
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
-
-	data, _ := json.Marshal(customers)
-	return string(data)
+	return jsonMarshal(customers)
 }
 
-// getCustomerOrders - Müşterinin siparişlerini getir
+// getCustomerOrders returns orders for a specific customer
 func getCustomerOrders(customerID string) string {
 	orders, err := store.GetCustomerOrders(customerID)
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
-
-	data, _ := json.Marshal(orders)
-	return string(data)
+	return jsonMarshal(orders)
 }
 
-// searchProducts - Ürün ara (autocomplete için)
+// updateCustomer updates customer information
+func updateCustomer(customerJSON string) string {
+	var data struct {
+		ID    string `json:"id"`
+		Name  string `json:"name"`
+		Phone string `json:"phone"`
+	}
+
+	if err := json.Unmarshal([]byte(customerJSON), &data); err != nil {
+		return jsonError(err)
+	}
+
+	if err := store.UpdateCustomer(data.ID, data.Name, data.Phone); err != nil {
+		return jsonError(err)
+	}
+
+	return jsonSuccess()
+}
+
+// deleteCustomer removes a customer
+func deleteCustomer(id string) string {
+	if err := store.DeleteCustomer(id); err != nil {
+		return jsonError(err)
+	}
+	return jsonSuccess()
+}
+
+// =============================================================================
+// Product Functions
+// =============================================================================
+
+// searchProducts searches products for autocomplete
 func searchProducts(searchTerm string) string {
 	products, err := store.SearchProducts(searchTerm)
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
-
-	data, _ := json.Marshal(products)
-	return string(data)
+	return jsonMarshal(products)
 }
 
-// listAllProducts - Tüm ürünleri listele
+// listAllProducts returns all products
 func listAllProducts() string {
 	products, err := store.ListProducts()
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
-
-	data, _ := json.Marshal(products)
-	return string(data)
+	return jsonMarshal(products)
 }
 
-// saveProduct - Ürün kaydet veya güncelle
+// listProductsPaginated returns paginated and filtered product list
+func listProductsPaginated(filterJSON string) string {
+	var request struct {
+		Page         int    `json:"page"`
+		PageSize     int    `json:"page_size"`
+		Search       string `json:"search"`
+		Category     string `json:"category"`
+		OnlyCritical bool   `json:"only_critical"`
+		SortField    string `json:"sort_field"`
+		SortDir      string `json:"sort_dir"`
+	}
+
+	if err := json.Unmarshal([]byte(filterJSON), &request); err != nil {
+		return jsonError(err)
+	}
+
+	filter := storage.ProductFilter{
+		Search:       request.Search,
+		Category:     request.Category,
+		OnlyCritical: request.OnlyCritical,
+		SortField:    request.SortField,
+		SortDir:      request.SortDir,
+	}
+
+	result, err := store.ListProductsPaginated(request.Page, request.PageSize, filter)
+	if err != nil {
+		return jsonError(err)
+	}
+
+	return jsonMarshal(result)
+}
+
+// saveProduct saves or updates a product
 func saveProduct(productJSON string) string {
-	var productData struct {
+	var data struct {
 		Name      string `json:"name"`
 		OEMNumber string `json:"oem_number"`
 	}
 
-	if err := json.Unmarshal([]byte(productJSON), &productData); err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+	if err := json.Unmarshal([]byte(productJSON), &data); err != nil {
+		return jsonError(err)
 	}
 
-	product, err := store.GetOrCreateProduct(productData.Name, productData.OEMNumber)
+	product, err := store.GetOrCreateProduct(data.Name, data.OEMNumber)
 	if err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
 
 	if product == nil {
@@ -396,63 +526,255 @@ func saveProduct(productJSON string) string {
 	return fmt.Sprintf(`{"success": true, "id": "%s"}`, product.ID)
 }
 
-// updateProduct - Ürünü güncelle
+// updateProduct updates product information
 func updateProduct(productJSON string) string {
-	var productData struct {
-		ID        string `json:"id"`
-		Name      string `json:"name"`
-		OEMNumber string `json:"oem_number"`
+	var data struct {
+		ID            string `json:"id"`
+		Name          string `json:"name"`
+		OEMNumber     string `json:"oem_number"`
+		Brand         string `json:"brand"`
+		Category      string `json:"category"`
+		Unit          string `json:"unit"`
+		CriticalStock int    `json:"critical_stock"`
 	}
 
-	if err := json.Unmarshal([]byte(productJSON), &productData); err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+	if err := json.Unmarshal([]byte(productJSON), &data); err != nil {
+		return jsonError(err)
 	}
 
-	if err := store.UpdateProduct(productData.ID, productData.Name, productData.OEMNumber); err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+	if err := store.UpdateProduct(
+		data.ID,
+		data.Name,
+		data.OEMNumber,
+		data.Brand,
+		data.Category,
+		data.Unit,
+		data.CriticalStock,
+	); err != nil {
+		return jsonError(err)
 	}
 
-	return `{"success": true}`
+	return jsonSuccess()
 }
 
-// deleteProduct - Ürünü sil
+// deleteProduct removes a product
 func deleteProduct(id string) string {
 	if err := store.DeleteProduct(id); err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+		return jsonError(err)
 	}
-
-	return `{"success": true}`
+	return jsonSuccess()
 }
 
-// updateCustomer - Müşteriyi güncelle
-func updateCustomer(customerJSON string) string {
-	var customerData struct {
-		ID    string `json:"id"`
-		Name  string `json:"name"`
-		Phone string `json:"phone"`
+// createProductFull creates a product with all fields
+func createProductFull(productJSON string) string {
+	var data struct {
+		Name          string  `json:"name"`
+		OEMNumber     string  `json:"oem_number"`
+		Brand         string  `json:"brand"`
+		Category      string  `json:"category"`
+		Unit          string  `json:"unit"`
+		StockQuantity float64 `json:"stock_quantity"`
+		CriticalStock int     `json:"critical_stock"`
 	}
 
-	if err := json.Unmarshal([]byte(customerJSON), &customerData); err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+	if err := json.Unmarshal([]byte(productJSON), &data); err != nil {
+		return jsonError(err)
 	}
 
-	if err := store.UpdateCustomer(customerData.ID, customerData.Name, customerData.Phone); err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+	product, err := store.CreateProductFull(
+		data.Name,
+		data.OEMNumber,
+		data.Brand,
+		data.Category,
+		data.Unit,
+		data.StockQuantity,
+		data.CriticalStock,
+	)
+
+	if err != nil {
+		return jsonError(err)
 	}
 
-	return `{"success": true}`
+	return jsonMarshal(product)
 }
 
-// deleteCustomer - Müşteriyi sil
-func deleteCustomer(id string) string {
-	if err := store.DeleteCustomer(id); err != nil {
-		return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+// getCategories returns all product categories
+func getCategories() string {
+	categories, err := store.GetCategories()
+	if err != nil {
+		return jsonError(err)
 	}
-
-	return `{"success": true}`
+	return jsonMarshal(categories)
 }
 
-// showErrorDialog - Windows hata dialog'u gösterir
+// getBrands returns all product brands
+func getBrands() string {
+	brands, err := store.GetBrands()
+	if err != nil {
+		return jsonError(err)
+	}
+	return jsonMarshal(brands)
+}
+
+// getUnits returns available units
+func getUnits() string {
+	units := storage.GetUnits()
+	return jsonMarshal(units)
+}
+
+// =============================================================================
+// Stock Management Functions
+// =============================================================================
+
+// stockIn adds stock to a product
+func stockIn(dataJSON string) string {
+	var data struct {
+		ProductID string  `json:"product_id"`
+		Amount    float64 `json:"amount"`
+		Note      string  `json:"note"`
+	}
+
+	if err := json.Unmarshal([]byte(dataJSON), &data); err != nil {
+		return jsonError(err)
+	}
+
+	if err := store.StockIn(data.ProductID, data.Amount, data.Note); err != nil {
+		return jsonError(err)
+	}
+
+	return jsonSuccess()
+}
+
+// stockOut removes stock from a product
+func stockOut(dataJSON string) string {
+	var data struct {
+		ProductID string  `json:"product_id"`
+		Amount    float64 `json:"amount"`
+		Note      string  `json:"note"`
+	}
+
+	if err := json.Unmarshal([]byte(dataJSON), &data); err != nil {
+		return jsonError(err)
+	}
+
+	if err := store.StockOut(data.ProductID, data.Amount, data.Note); err != nil {
+		return jsonError(err)
+	}
+
+	return jsonSuccess()
+}
+
+// bulkStockIn adds stock to multiple products
+func bulkStockIn(dataJSON string) string {
+	var entries []storage.BulkStockInfo
+
+	if err := json.Unmarshal([]byte(dataJSON), &entries); err != nil {
+		return jsonError(err)
+	}
+
+	successful, errors := store.BulkStockIn(entries)
+
+	result := map[string]interface{}{
+		"success":    true,
+		"successful": successful,
+		"errors":     errors,
+	}
+
+	return jsonMarshal(result)
+}
+
+// bulkStockOut removes stock from multiple products
+func bulkStockOut(dataJSON string) string {
+	var entries []storage.BulkStockInfo
+
+	if err := json.Unmarshal([]byte(dataJSON), &entries); err != nil {
+		return jsonError(err)
+	}
+
+	successful, errors := store.BulkStockOut(entries)
+
+	result := map[string]interface{}{
+		"success":    true,
+		"successful": successful,
+		"errors":     errors,
+	}
+
+	return jsonMarshal(result)
+}
+
+// getStockMovements returns stock movement history
+func getStockMovements(filterJSON string) string {
+	var filter struct {
+		ProductID string `json:"product_id"`
+		StartStr  string `json:"start"`
+		EndStr    string `json:"end"`
+	}
+
+	if err := json.Unmarshal([]byte(filterJSON), &filter); err != nil {
+		return jsonError(err)
+	}
+
+	var start, end time.Time
+	if filter.StartStr != "" {
+		start, _ = time.Parse("2006-01-02", filter.StartStr)
+	}
+	if filter.EndStr != "" {
+		end, _ = time.Parse("2006-01-02", filter.EndStr)
+		end = end.Add(24 * time.Hour) // Include end of day
+	}
+
+	movements, err := store.GetStockMovements(filter.ProductID, start, end)
+	if err != nil {
+		return jsonError(err)
+	}
+
+	return jsonMarshal(movements)
+}
+
+// getCriticalStockProducts returns products below critical stock level
+func getCriticalStockProducts() string {
+	products, err := store.GetCriticalStockProducts()
+	if err != nil {
+		return jsonError(err)
+	}
+	return jsonMarshal(products)
+}
+
+// getStockReport generates a stock report for a given period
+func getStockReport(filterJSON string) string {
+	var filter struct {
+		Period  string `json:"period"` // "daily" or "monthly"
+		DateStr string `json:"date"`   // "2024-01-15" or "2024-01"
+	}
+
+	if err := json.Unmarshal([]byte(filterJSON), &filter); err != nil {
+		return jsonError(err)
+	}
+
+	var date time.Time
+	if filter.Period == "daily" {
+		date, _ = time.Parse("2006-01-02", filter.DateStr)
+	} else {
+		date, _ = time.Parse("2006-01", filter.DateStr)
+	}
+
+	if date.IsZero() {
+		date = time.Now()
+	}
+
+	report, err := store.GetStockReport(filter.Period, date)
+	if err != nil {
+		return jsonError(err)
+	}
+
+	return jsonMarshal(report)
+}
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+// showErrorDialog displays a Windows error dialog
 func showErrorDialog(title, message string) {
 	user32 := syscall.NewLazyDLL("user32.dll")
 	messageBox := user32.NewProc("MessageBoxW")
@@ -462,4 +784,43 @@ func showErrorDialog(title, message string) {
 
 	// MB_OK | MB_ICONERROR = 0x10
 	messageBox.Call(0, uintptr(unsafe.Pointer(messagePtr)), uintptr(unsafe.Pointer(titlePtr)), 0x10)
+}
+
+// jsonError returns a JSON error response
+func jsonError(err error) string {
+	return fmt.Sprintf(`{"error": "%s"}`, err.Error())
+}
+
+// jsonSuccess returns a JSON success response
+func jsonSuccess() string {
+	return `{"success": true}`
+}
+
+// jsonMarshal marshals data to JSON string
+func jsonMarshal(data interface{}) string {
+	bytes, _ := json.Marshal(data)
+	return string(bytes)
+}
+
+// =============================================================================
+// Settings Functions
+// =============================================================================
+
+// setDeveloperMode enables or disables developer mode
+// Note: Changes take effect after application restart
+func setDeveloperMode(enabled bool) string {
+	if err := storage.UpdateDeveloperMode(enabled); err != nil {
+		return jsonError(err)
+	}
+	return jsonMarshal(map[string]interface{}{
+		"success":          true,
+		"restart_required": true,
+		"message":          "Geliştirici modu değiştirildi. Değişikliklerin etkili olması için uygulamayı yeniden başlatın.",
+	})
+}
+
+// getDeveloperMode returns current developer mode status
+func getDeveloperMode() string {
+	enabled := storage.IsDeveloperMode()
+	return jsonMarshal(map[string]bool{"enabled": enabled})
 }

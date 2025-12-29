@@ -6,19 +6,51 @@
 :root {
   --bg-primary: #f1f5f9;
   --bg-secondary: #ffffff;
+  --bg-tertiary: #f8fafc;
   --bg-card: #ffffff;
   --border-color: #e2e8f0;
   --text-primary: #0f172a;
   --text-muted: #64748b;
+  
+  /* Accent colors */
+  --accent-color: #0ea5e9;
+  --accent-hover: #0284c7;
+  
+  /* Status colors with backgrounds */
+  --danger-color: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.1);
+  --danger-text: #dc2626;
+  --success-color: #22c55e;
+  --success-bg: rgba(34, 197, 94, 0.1);
+  --success-text: #16a34a;
+  --warning-color: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.1);
+  --warning-text: #d97706;
 }
 
 .dark {
   --bg-primary: #0f172a;
   --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
   --bg-card: #1e293b;
   --border-color: #334155;
   --text-primary: #f1f5f9;
   --text-muted: #94a3b8;
+  
+  /* Accent colors */
+  --accent-color: #0ea5e9;
+  --accent-hover: #38bdf8;
+  
+  /* Status colors with backgrounds */
+  --danger-color: #f87171;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --danger-text: #fca5a5;
+  --success-color: #4ade80;
+  --success-bg: rgba(34, 197, 94, 0.15);
+  --success-text: #86efac;
+  --warning-color: #fbbf24;
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  --warning-text: #fcd34d;
 }
 
 /* Custom scrollbar */

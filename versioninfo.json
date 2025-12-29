@@ -1,16 +1,16 @@
 {
   "FixedFileInfo": {
     "FileVersion": {
-      "Major": 1,
-      "Minor": 0,
-      "Patch": 0,
-      "Build": 1
+      "Major": 25,
+      "Minor": 12,
+      "Patch": 1,
+      "Build": 0
     },
     "ProductVersion": {
-      "Major": 1,
-      "Minor": 0,
-      "Patch": 0,
-      "Build": 1
+      "Major": 25,
+      "Minor": 12,
+      "Patch": 1,
+      "Build": 0
     },
     "FileFlagsMask": "3f",
     "FileFlags ": "00",
@@ -19,17 +19,17 @@
     "FileSubType": "00"
   },
   "StringFileInfo": {
-    "Comments": "Oto Parça Sipariş Yönetim Sistemi - Open Source",
+    "Comments": "Istemci tabanli iliskisel yonetim uygulamasi. Dahili siparis, stok ve raporlama sistemiyle birlikte gelir. Open Source - MIT License",
     "CompanyName": "Durasoft",
-    "FileDescription": "Oto Parça Sipariş Sistemi",
-    "FileVersion": "25.12-stable",
-    "InternalName": "OtoParcaSiparis",
-    "LegalCopyright": "Copyright © 2025 Ferhat Duran. MIT License.",
+    "FileDescription": "AutoManagement - Oto Yonetim Sistemi",
+    "FileVersion": "25.12.1",
+    "InternalName": "AutoManagement",
+    "LegalCopyright": "Copyright 2025 Ferhat Duran. MIT License.",
     "LegalTrademarks": "Durasoft",
-    "OriginalFilename": "OtoParcaSiparis.exe",
+    "OriginalFilename": "AutoManagement.exe",
     "PrivateBuild": "",
-    "ProductName": "Oto Parça Sipariş Sistemi",
-    "ProductVersion": "25.12-stable",
+    "ProductName": "AutoManagement - Oto Yonetim Sistemi",
+    "ProductVersion": "25.12.1",
     "SpecialBuild": ""
   },
   "VarFileInfo": {

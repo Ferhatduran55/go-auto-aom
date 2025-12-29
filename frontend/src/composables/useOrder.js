@@ -14,6 +14,28 @@ const editingProductId = ref(null)
 const customerFilterActive = ref(false) // Müşteri filtresi aktif mi?
 const advancedSearchFilter = ref(null) // Gelişmiş arama filtreleri
 
+// Settings
+const settings = ref({
+  autoDeductStock: false // Automatically deduct stock when order is saved
+})
+
+// Load settings (localStorage)
+function loadSettings() {
+  try {
+    const saved = localStorage.getItem('orderSettings')
+    if (saved) {
+      settings.value = { ...settings.value, ...JSON.parse(saved) }
+    }
+  } catch (e) {
+    console.error('Settings could not be loaded:', e)
+  }
+}
+
+// Save settings
+function saveSettings() {
+  localStorage.setItem('orderSettings', JSON.stringify(settings.value))
+}
+
 // Computed
 const grandTotal = computed(() => {
   return products.value.reduce((sum, p) => sum + p.total_price, 0)
@@ -24,6 +46,8 @@ const isEditing = computed(() => currentOrderId.value !== null)
 // Data loading
 async function loadData() {
   try {
+    loadSettings() // Load settings too
+    
     const [customers, prods] = await Promise.all([
       api.listCustomers(),
       api.listProducts()
@@ -120,10 +144,47 @@ async function saveOrder() {
     if (result.customer_id) {
       currentCustomerId.value = result.customer_id
     }
+    
+    // Auto deduct stock if enabled
+    if (settings.value.autoDeductStock) {
+      await deductStock()
+    }
+    
     await loadData()
   }
   
   return result
+}
+
+// Deduct stock for order items
+async function deductStock() {
+  // Prepare bulk stock out
+  const bulkOut = []
+  
+  for (const item of products.value) {
+    // Find product in catalog (by OEM or name)
+    const catalogProduct = allProducts.value.find(p => 
+      p.oem_number?.toLowerCase() === item.oem_number?.toLowerCase() ||
+      p.name.toLowerCase() === item.product_name.toLowerCase()
+    )
+    
+    if (catalogProduct && catalogProduct.id) {
+      bulkOut.push({
+        product_id: catalogProduct.id,
+        amount: item.quantity
+      })
+    }
+  }
+  
+  if (bulkOut.length > 0) {
+    const note = `Order: ${orderTitle.value || 'Unnamed'} - ${customerName.value || 'No customer'}`
+    try {
+      const entries = bulkOut.map(c => ({ product_id: c.product_id, amount: c.amount, note: note }))
+      await api.bulkStockOut(entries)
+    } catch (e) {
+      console.error('Stock deduction error:', e)
+    }
+  }
 }
 
 // Sipariş yükleme
@@ -191,6 +252,7 @@ export function useOrder() {
     editingProductId,
     customerFilterActive,
     advancedSearchFilter,
+    settings,
     
     // Computed
     grandTotal,
@@ -206,5 +268,7 @@ export function useOrder() {
     loadOrder,
     resetOrder,
     clearProducts,
+    deductStock,
+    saveSettings,
   }
 }
