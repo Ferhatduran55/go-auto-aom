@@ -19,8 +19,8 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Upgrade npm to latest
-        run: npm install -g npm@latest
+      - name: Ensure npm v7 (compatible with Node 18)
+        run: npm install -g npm@7 || true
 
       - name: Clean potential broken install
         shell: powershell
@@ -28,9 +28,9 @@ jobs:
           if (Test-Path "frontend\node_modules") { Remove-Item "frontend\node_modules" -Recurse -Force }
           if (Test-Path "frontend\package-lock.json") { Remove-Item "frontend\package-lock.json" -Force }
 
-      - name: Install dependencies (fresh)
+      - name: Install dependencies (fresh, no optional)
         working-directory: frontend
-        run: npm install
+        run: npm install --no-optional
 
       - name: Build frontend
         working-directory: frontend
