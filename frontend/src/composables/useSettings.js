@@ -11,6 +11,7 @@ const settings = ref({
   // Stock settings
   autoDeductStock: false,
   defaultUnit: 'adet',
+  hideCriticalStockWarning: false, // Kritik stok uyarısını gizle
   
   // Developer settings
   developerMode: false,

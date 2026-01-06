@@ -299,5 +299,63 @@ export const api = {
       return JSON.parse(result)
     }
     return { enabled: false }
+  },
+
+  // ============================================
+  // Not İşlemleri
+  // ============================================
+
+  // Not kaydet
+  async saveNote(noteData) {
+    if (typeof saveNote !== 'undefined') {
+      const result = await saveNote(JSON.stringify(noteData))
+      return JSON.parse(result)
+    }
+    return { error: 'API not available' }
+  },
+
+  // Tüm notları yükle (opsiyonel arama terimi ile)
+  async loadNotes(searchTerm = '') {
+    if (typeof loadNotes !== 'undefined') {
+      const result = await loadNotes(searchTerm)
+      return JSON.parse(result) || []
+    }
+    return []
+  },
+
+  // Tek not yükle
+  async loadNoteById(id) {
+    if (typeof loadNoteById !== 'undefined') {
+      const result = await loadNoteById(id)
+      return JSON.parse(result)
+    }
+    return { error: 'API not available' }
+  },
+
+  // Not sil
+  async deleteNote(id) {
+    if (typeof deleteNote !== 'undefined') {
+      const result = await deleteNote(id)
+      return JSON.parse(result)
+    }
+    return { error: 'API not available' }
+  },
+
+  // Notlarda ara
+  async searchNotes(searchTerm) {
+    if (typeof searchNotes !== 'undefined') {
+      const result = await searchNotes(searchTerm)
+      return JSON.parse(result) || []
+    }
+    return []
+  },
+
+  // Metni otomatik formatla
+  async autoFormatText(rawText) {
+    if (typeof autoFormatText !== 'undefined') {
+      const result = await autoFormatText(rawText)
+      return JSON.parse(result)
+    }
+    return { formatted: rawText }
   }
 }

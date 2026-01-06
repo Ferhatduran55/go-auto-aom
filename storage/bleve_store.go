@@ -120,6 +120,16 @@ type Order struct {
 	UpdatedAt    time.Time   `json:"updated_at"`
 }
 
+// Note - Hızlı not alma (müşteri görüşmeleri için)
+type Note struct {
+	ID           string    `json:"id"`
+	Title        string    `json:"title"`         // Not başlığı
+	Content      string    `json:"content"`       // Not içeriği (ham veya formatlanmış)
+	CustomerName string    `json:"customer_name"` // Müşteri adı (opsiyonel)
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
 // BleveStore - Bleve tabanlı depolama
 type BleveStore struct {
 	index    bleve.Index
@@ -1537,4 +1547,215 @@ func (s *BleveStore) GetStockReport(period string, date time.Time) (*StockReport
 // GetUnits - Returns available units
 func GetUnits() []string {
 	return []string{UnitPiece, UnitLitre, UnitBox, UnitPacket}
+}
+
+// ============================================
+// Note CRUD Operations
+// ============================================
+
+// SaveNote - Notu kaydet
+func (s *BleveStore) SaveNote(note *Note) error {
+	if note.ID == "" {
+		note.ID = uuid.New().String()
+	}
+
+	note.UpdatedAt = time.Now()
+	if note.CreatedAt.IsZero() {
+		note.CreatedAt = time.Now()
+	}
+
+	// JSON'a çevir
+	data, err := json.Marshal(note)
+	if err != nil {
+		return fmt.Errorf("JSON dönüştürme hatası: %w", err)
+	}
+
+	// Bleve'e indexle
+	if err := s.index.Index("note_"+note.ID, note); err != nil {
+		return fmt.Errorf("indexleme hatası: %w", err)
+	}
+
+	// JSON dosyası olarak sakla
+	noteFile := filepath.Join(s.dataPath, "notes", note.ID+".json")
+	if err := os.MkdirAll(filepath.Dir(noteFile), 0755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(noteFile, data, 0644); err != nil {
+		return fmt.Errorf("dosya yazma hatası: %w", err)
+	}
+
+	return nil
+}
+
+// GetNote - Notu getir
+func (s *BleveStore) GetNote(id string) (*Note, error) {
+	noteFile := filepath.Join(s.dataPath, "notes", id+".json")
+	data, err := os.ReadFile(noteFile)
+	if err != nil {
+		return nil, fmt.Errorf("not bulunamadı: %w", err)
+	}
+
+	var note Note
+	if err := json.Unmarshal(data, &note); err != nil {
+		return nil, fmt.Errorf("JSON çözümleme hatası: %w", err)
+	}
+
+	return &note, nil
+}
+
+// ListNotes - Tüm notları listele
+func (s *BleveStore) ListNotes() ([]*Note, error) {
+	notesDir := filepath.Join(s.dataPath, "notes")
+
+	// Dizin yoksa boş liste döndür
+	if _, err := os.Stat(notesDir); os.IsNotExist(err) {
+		return []*Note{}, nil
+	}
+
+	entries, err := os.ReadDir(notesDir)
+	if err != nil {
+		return nil, fmt.Errorf("dizin okunamadı: %w", err)
+	}
+
+	var notes []*Note
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+
+		id := entry.Name()[:len(entry.Name())-5] // .json uzantısını kaldır
+		note, err := s.GetNote(id)
+		if err != nil {
+			continue
+		}
+		notes = append(notes, note)
+	}
+
+	// Tarihe göre sırala (en yeni önce)
+	sort.Slice(notes, func(i, j int) bool {
+		return notes[i].UpdatedAt.After(notes[j].UpdatedAt)
+	})
+
+	return notes, nil
+}
+
+// DeleteNote - Notu sil
+func (s *BleveStore) DeleteNote(id string) error {
+	// Bleve'den sil
+	if err := s.index.Delete("note_" + id); err != nil {
+		return fmt.Errorf("index silme hatası: %w", err)
+	}
+
+	// Dosyadan sil
+	noteFile := filepath.Join(s.dataPath, "notes", id+".json")
+	if err := os.Remove(noteFile); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("dosya silme hatası: %w", err)
+	}
+
+	return nil
+}
+
+// SearchNotes - Notlarda arama yap
+func (s *BleveStore) SearchNotes(searchTerm string) ([]*Note, error) {
+	if searchTerm == "" {
+		return s.ListNotes()
+	}
+
+	allNotes, err := s.ListNotes()
+	if err != nil {
+		return nil, err
+	}
+
+	searchLower := strings.ToLower(searchTerm)
+	var filtered []*Note
+	for _, note := range allNotes {
+		if strings.Contains(strings.ToLower(note.Title), searchLower) ||
+			strings.Contains(strings.ToLower(note.Content), searchLower) ||
+			strings.Contains(strings.ToLower(note.CustomerName), searchLower) {
+			filtered = append(filtered, note)
+		}
+	}
+
+	return filtered, nil
+}
+
+// AutoFormatText - Karışık metni otomatik formatla
+// Desteklenen işaretler: =>, ->, :, =, -
+// Satırları hizalar ve tutarlı boşluklar ekler
+func AutoFormatText(rawText string) string {
+	if rawText == "" {
+		return ""
+	}
+
+	lines := strings.Split(rawText, "\n")
+	
+	// İşaret desenlerini bul
+	markerPattern := []string{"=>", "->", ":", "=", " - "}
+	
+	type parsedLine struct {
+		left     string
+		marker   string
+		right    string
+		hasMarker bool
+	}
+	
+	var parsed []parsedLine
+	maxLeftLen := 0
+	
+	for _, line := range lines {
+		trimmedLine := strings.TrimSpace(line)
+		if trimmedLine == "" {
+			parsed = append(parsed, parsedLine{left: "", hasMarker: false})
+			continue
+		}
+		
+		foundMarker := false
+		for _, marker := range markerPattern {
+			if idx := strings.Index(trimmedLine, marker); idx > 0 {
+				left := strings.TrimSpace(trimmedLine[:idx])
+				right := strings.TrimSpace(trimmedLine[idx+len(marker):])
+				
+				if left != "" {
+					parsed = append(parsed, parsedLine{
+						left:      left,
+						marker:    marker,
+						right:     right,
+						hasMarker: true,
+					})
+					if len(left) > maxLeftLen {
+						maxLeftLen = len(left)
+					}
+					foundMarker = true
+					break
+				}
+			}
+		}
+		
+		if !foundMarker {
+			parsed = append(parsed, parsedLine{left: trimmedLine, hasMarker: false})
+		}
+	}
+	
+	// Hizalanmış metni oluştur
+	var result []string
+	for _, p := range parsed {
+		if p.left == "" && !p.hasMarker {
+			result = append(result, "")
+			continue
+		}
+		
+		if p.hasMarker {
+			// Sol tarafı padding ile hizala
+			paddedLeft := p.left + strings.Repeat(" ", maxLeftLen-len(p.left))
+			formattedMarker := p.marker
+			if p.marker == ":" {
+				formattedMarker = " :"
+			}
+			result = append(result, paddedLeft+" "+formattedMarker+" "+p.right)
+		} else {
+			result = append(result, p.left)
+		}
+	}
+	
+	return strings.Join(result, "\n")
 }

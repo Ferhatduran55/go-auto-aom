@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { api } from '@/api'
 
 // Reaktif state
@@ -13,6 +13,10 @@ const allCustomers = ref([])
 const editingProductId = ref(null)
 const customerFilterActive = ref(false) // Müşteri filtresi aktif mi?
 const advancedSearchFilter = ref(null) // Gelişmiş arama filtreleri
+
+// Kaydedilmemiş değişiklik takibi
+const lastSavedState = ref(null)
+const hasUnsavedChanges = ref(false)
 
 // Settings
 const settings = ref({
@@ -35,6 +39,40 @@ function loadSettings() {
 function saveSettings() {
   localStorage.setItem('orderSettings', JSON.stringify(settings.value))
 }
+
+// Mevcut durumu snapshot olarak kaydet
+function saveSnapshot() {
+  lastSavedState.value = JSON.stringify({
+    products: products.value,
+    orderTitle: orderTitle.value,
+    customerName: customerName.value,
+    customerPhone: customerPhone.value
+  })
+  hasUnsavedChanges.value = false
+}
+
+// Mevcut durumun değişip değişmediğini kontrol et
+function checkForChanges() {
+  if (!lastSavedState.value) {
+    // İlk yükleme veya yeni sipariş - ürün varsa değişiklik var demektir
+    hasUnsavedChanges.value = products.value.length > 0
+    return
+  }
+  
+  const currentState = JSON.stringify({
+    products: products.value,
+    orderTitle: orderTitle.value,
+    customerName: customerName.value,
+    customerPhone: customerPhone.value
+  })
+  
+  hasUnsavedChanges.value = currentState !== lastSavedState.value
+}
+
+// Watch ile değişiklikleri takip et
+watch([products, orderTitle, customerName, customerPhone], () => {
+  checkForChanges()
+}, { deep: true })
 
 // Computed
 const grandTotal = computed(() => {
@@ -145,6 +183,9 @@ async function saveOrder() {
       currentCustomerId.value = result.customer_id
     }
     
+    // Kaydet sonrası snapshot al
+    saveSnapshot()
+    
     // Auto deduct stock if enabled
     if (settings.value.autoDeductStock) {
       await deductStock()
@@ -218,6 +259,9 @@ async function loadOrder(orderId) {
     total_price: item.total_price
   }))
 
+  // Yükleme sonrası snapshot al
+  saveSnapshot()
+
   return order
 }
 
@@ -231,6 +275,10 @@ function resetOrder() {
   customerPhone.value = ''
   editingProductId.value = null
   customerFilterActive.value = false // Filtreyi kapat
+  
+  // Reset sonrası snapshot temizle
+  lastSavedState.value = null
+  hasUnsavedChanges.value = false
 }
 
 // Listeyi temizle
@@ -253,6 +301,7 @@ export function useOrder() {
     customerFilterActive,
     advancedSearchFilter,
     settings,
+    hasUnsavedChanges,
     
     // Computed
     grandTotal,
@@ -270,5 +319,6 @@ export function useOrder() {
     clearProducts,
     deductStock,
     saveSettings,
+    saveSnapshot,
   }
 }

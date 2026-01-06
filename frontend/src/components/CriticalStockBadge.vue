@@ -1,5 +1,5 @@
 <template>
-  <div class="critical-stock-badge" v-if="criticalCount > 0">
+  <div class="critical-stock-badge" v-if="criticalCount > 0 && !settings.hideCriticalStockWarning">
     <button 
       @click="dropdownOpen = !dropdownOpen" 
       class="badge-btn"
@@ -61,8 +61,11 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useStock } from '../composables/useStock'
+import { useSettings } from '../composables/useSettings'
 
 const emit = defineEmits(['stock-in', 'product-selected', 'show-all'])
+
+const { settings } = useSettings()
 
 const { 
   criticalStockProducts: criticalProducts, 

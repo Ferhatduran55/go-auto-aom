@@ -106,6 +106,7 @@ func main() {
 	bindProductFunctions(w)
 	bindStockFunctions(w)
 	bindSettingsFunctions(w)
+	bindNoteFunctions(w)
 
 	w.Navigate(fmt.Sprintf("http://127.0.0.1:%d/", port))
 	w.Run()
@@ -163,6 +164,16 @@ func bindStockFunctions(w webview2.WebView) {
 func bindSettingsFunctions(w webview2.WebView) {
 	w.Bind("setDeveloperMode", setDeveloperMode)
 	w.Bind("getDeveloperMode", getDeveloperMode)
+}
+
+// bindNoteFunctions binds note-related functions to WebView
+func bindNoteFunctions(w webview2.WebView) {
+	w.Bind("saveNote", saveNote)
+	w.Bind("loadNotes", loadNotes)
+	w.Bind("loadNoteById", loadNoteById)
+	w.Bind("deleteNote", deleteNote)
+	w.Bind("searchNotes", searchNotes)
+	w.Bind("autoFormatText", autoFormatText)
 }
 
 // =============================================================================
@@ -820,4 +831,93 @@ func setDeveloperMode(enabled bool) string {
 func getDeveloperMode() string {
 	enabled := storage.IsDeveloperMode()
 	return jsonMarshal(map[string]bool{"enabled": enabled})
+}
+
+// =============================================================================
+// Note Functions
+// =============================================================================
+
+// saveNote saves or updates a note in the Bleve store
+func saveNote(noteJSON string) string {
+	var noteData struct {
+		ID           string `json:"id"`
+		Title        string `json:"title"`
+		Content      string `json:"content"`
+		CustomerName string `json:"customer_name"`
+	}
+
+	if err := json.Unmarshal([]byte(noteJSON), &noteData); err != nil {
+		return jsonError(err)
+	}
+
+	note := &storage.Note{
+		ID:           noteData.ID,
+		Title:        noteData.Title,
+		Content:      noteData.Content,
+		CustomerName: noteData.CustomerName,
+	}
+
+	// Mevcut notu güncelle veya yeni oluştur
+	if noteData.ID != "" {
+		existingNote, err := store.GetNote(noteData.ID)
+		if err == nil {
+			note.CreatedAt = existingNote.CreatedAt
+		}
+	}
+
+	if err := store.SaveNote(note); err != nil {
+		return jsonError(err)
+	}
+
+	return fmt.Sprintf(`{"success": true, "id": "%s"}`, note.ID)
+}
+
+// loadNotes loads all notes, optionally filtered by search term
+func loadNotes(searchTerm string) string {
+	var notes []*storage.Note
+	var err error
+
+	if searchTerm != "" {
+		notes, err = store.SearchNotes(searchTerm)
+	} else {
+		notes, err = store.ListNotes()
+	}
+
+	if err != nil {
+		return jsonError(err)
+	}
+
+	return jsonMarshal(notes)
+}
+
+// loadNoteById loads a single note by ID
+func loadNoteById(id string) string {
+	note, err := store.GetNote(id)
+	if err != nil {
+		return jsonError(err)
+	}
+	return jsonMarshal(note)
+}
+
+// deleteNote deletes a note by ID
+func deleteNote(id string) string {
+	if err := store.DeleteNote(id); err != nil {
+		return jsonError(err)
+	}
+	return jsonSuccess()
+}
+
+// searchNotes searches notes by term
+func searchNotes(searchTerm string) string {
+	notes, err := store.SearchNotes(searchTerm)
+	if err != nil {
+		return jsonError(err)
+	}
+	return jsonMarshal(notes)
+}
+
+// autoFormatText formats raw text with alignment
+func autoFormatText(rawText string) string {
+	formatted := storage.AutoFormatText(rawText)
+	return jsonMarshal(map[string]string{"formatted": formatted})
 }
