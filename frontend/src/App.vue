@@ -182,7 +182,7 @@
         <span class="opacity-70">🔓 Open Source</span>
         <span class="opacity-50">•</span>
         <span>Sürüm:</span>
-        <span class="font-semibold text-success">25.12.3</span>
+        <span class="font-semibold text-success">26.1.2</span>
         <span class="opacity-50">•</span>
         <span>Geliştirici:</span>
         <a 
