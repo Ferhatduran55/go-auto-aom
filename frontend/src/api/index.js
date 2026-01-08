@@ -357,5 +357,76 @@ export const api = {
       return JSON.parse(result)
     }
     return { formatted: rawText }
+  },
+
+  // ============================================
+  // WhatsApp Sipariş İşlemleri
+  // ============================================
+
+  // WhatsApp siparişi kaydet
+  async saveWhatsAppOrder(orderData) {
+    if (typeof saveWhatsAppOrder !== 'undefined') {
+      const result = await saveWhatsAppOrder(JSON.stringify(orderData))
+      return JSON.parse(result)
+    }
+    return { error: 'API not available' }
+  },
+
+  // Tüm WhatsApp siparişlerini yükle (opsiyonel arama terimi ile)
+  async loadWhatsAppOrders(searchTerm = '') {
+    if (typeof loadWhatsAppOrders !== 'undefined') {
+      const result = await loadWhatsAppOrders(searchTerm)
+      return JSON.parse(result) || []
+    }
+    return []
+  },
+
+  // Tek WhatsApp siparişi yükle
+  async loadWhatsAppOrderById(id) {
+    if (typeof loadWhatsAppOrderById !== 'undefined') {
+      const result = await loadWhatsAppOrderById(id)
+      return JSON.parse(result)
+    }
+    return { error: 'API not available' }
+  },
+
+  // WhatsApp siparişi sil
+  async deleteWhatsAppOrder(id) {
+    if (typeof deleteWhatsAppOrder !== 'undefined') {
+      const result = await deleteWhatsAppOrder(id)
+      return JSON.parse(result)
+    }
+    return { error: 'API not available' }
+  },
+
+  // WhatsApp siparişlerinde ara
+  async searchWhatsAppOrders(searchTerm) {
+    if (typeof searchWhatsAppOrders !== 'undefined') {
+      const result = await searchWhatsAppOrders(searchTerm)
+      return JSON.parse(result) || []
+    }
+    return []
+  },
+
+  // WhatsApp siparişine durum ekle
+  async addWhatsAppOrderStatus(orderId, status, note = '') {
+    if (typeof addWhatsAppOrderStatus !== 'undefined') {
+      const result = await addWhatsAppOrderStatus(JSON.stringify({
+        order_id: orderId,
+        status: status,
+        note: note
+      }))
+      return JSON.parse(result)
+    }
+    return { error: 'API not available' }
+  },
+
+  // WhatsApp siparişlerini duruma göre filtrele
+  async filterWhatsAppOrdersByStatus(status) {
+    if (typeof filterWhatsAppOrdersByStatus !== 'undefined') {
+      const result = await filterWhatsAppOrdersByStatus(status)
+      return JSON.parse(result) || []
+    }
+    return []
   }
 }

@@ -130,6 +130,68 @@ type Note struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+// ============================================
+// WhatsApp Sipariş Yönetimi
+// ============================================
+
+// WhatsApp Sipariş Durumları
+const (
+	StatusTedarik      = "tedarik_surecinde"
+	StatusHazirlaniyor = "hazirlaniyor"
+	StatusHazirlandi   = "hazirlandi"
+	StatusKargoda      = "kargoya_verildi"
+	StatusTamamlandi   = "tamamlandi"
+	StatusIade         = "iade"
+	StatusHukumsuz     = "hukumsuz"
+)
+
+// WhatsApp Ödeme Yöntemleri
+const (
+	PaymentHavale     = "havale"
+	PaymentNakit      = "nakit"
+	PaymentKrediKarti = "kredi_karti"
+)
+
+// WhatsApp Parça Türleri
+const (
+	PartTypeCikma = "cikma"
+	PartTypeSifir = "sifir"
+)
+
+// WhatsAppOrderStatus - Sipariş durum geçmişi kaydı
+type WhatsAppOrderStatus struct {
+	ID        string    `json:"id"`
+	Status    string    `json:"status"`    // tedarik_surecinde, hazirlaniyor, vs.
+	Note      string    `json:"note"`      // Durum notu (opsiyonel)
+	Timestamp time.Time `json:"timestamp"` // Durum değişiklik zamanı
+}
+
+// WhatsAppOrderItem - WhatsApp sipariş kalemi
+type WhatsAppOrderItem struct {
+	ID          string  `json:"id"`
+	ProductName string  `json:"product_name"` // Ürün adı (örn: "Tofaş ön tampon")
+	Quantity    int     `json:"quantity"`     // Adet
+	Price       float64 `json:"price"`        // Birim fiyat
+	Type        string  `json:"type"`         // cikma veya sifir
+	Total       float64 `json:"total"`        // Hesaplanan toplam (adet × fiyat)
+}
+
+// WhatsAppOrder - WhatsApp/Telefon siparişi
+type WhatsAppOrder struct {
+	ID            string                `json:"id"`
+	Date          time.Time             `json:"date"`           // Sipariş tarihi (zorunlu)
+	CustomerName  string                `json:"customer_name"`  // Müşteri adı (opsiyonel)
+	CustomerPhone string                `json:"customer_phone"` // Telefon (opsiyonel)
+	PaymentMethod string                `json:"payment_method"` // havale, nakit, kredi_karti
+	PaymentNote   string                `json:"payment_note"`   // Ödeme notu (kredi kartı için taksit bilgisi vs.)
+	Items         []WhatsAppOrderItem   `json:"items"`          // Sipariş kalemleri
+	StatusHistory []WhatsAppOrderStatus `json:"status_history"` // Durum geçmişi
+	CurrentStatus string                `json:"current_status"` // Mevcut durum
+	GrandTotal    float64               `json:"grand_total"`    // Genel toplam
+	CreatedAt     time.Time             `json:"created_at"`
+	UpdatedAt     time.Time             `json:"updated_at"`
+}
+
 // BleveStore - Bleve tabanlı depolama
 type BleveStore struct {
 	index    bleve.Index
@@ -1688,33 +1750,33 @@ func AutoFormatText(rawText string) string {
 	}
 
 	lines := strings.Split(rawText, "\n")
-	
+
 	// İşaret desenlerini bul
 	markerPattern := []string{"=>", "->", ":", "=", " - "}
-	
+
 	type parsedLine struct {
-		left     string
-		marker   string
-		right    string
+		left      string
+		marker    string
+		right     string
 		hasMarker bool
 	}
-	
+
 	var parsed []parsedLine
 	maxLeftLen := 0
-	
+
 	for _, line := range lines {
 		trimmedLine := strings.TrimSpace(line)
 		if trimmedLine == "" {
 			parsed = append(parsed, parsedLine{left: "", hasMarker: false})
 			continue
 		}
-		
+
 		foundMarker := false
 		for _, marker := range markerPattern {
 			if idx := strings.Index(trimmedLine, marker); idx > 0 {
 				left := strings.TrimSpace(trimmedLine[:idx])
 				right := strings.TrimSpace(trimmedLine[idx+len(marker):])
-				
+
 				if left != "" {
 					parsed = append(parsed, parsedLine{
 						left:      left,
@@ -1730,12 +1792,12 @@ func AutoFormatText(rawText string) string {
 				}
 			}
 		}
-		
+
 		if !foundMarker {
 			parsed = append(parsed, parsedLine{left: trimmedLine, hasMarker: false})
 		}
 	}
-	
+
 	// Hizalanmış metni oluştur
 	var result []string
 	for _, p := range parsed {
@@ -1743,7 +1805,7 @@ func AutoFormatText(rawText string) string {
 			result = append(result, "")
 			continue
 		}
-		
+
 		if p.hasMarker {
 			// Sol tarafı padding ile hizala
 			paddedLeft := p.left + strings.Repeat(" ", maxLeftLen-len(p.left))
@@ -1756,6 +1818,208 @@ func AutoFormatText(rawText string) string {
 			result = append(result, p.left)
 		}
 	}
-	
+
 	return strings.Join(result, "\n")
+}
+
+// ============================================
+// WhatsApp Order CRUD Operations
+// ============================================
+
+// SaveWhatsAppOrder - WhatsApp siparişi kaydet
+func (s *BleveStore) SaveWhatsAppOrder(order *WhatsAppOrder) error {
+	if order.ID == "" {
+		order.ID = uuid.New().String()
+	}
+
+	order.UpdatedAt = time.Now()
+	if order.CreatedAt.IsZero() {
+		order.CreatedAt = time.Now()
+	}
+
+	// Tarihi kontrol et (zorunlu)
+	if order.Date.IsZero() {
+		order.Date = time.Now()
+	}
+
+	// Kalem toplamlarını ve genel toplamı hesapla
+	var grandTotal float64
+	for i := range order.Items {
+		if order.Items[i].ID == "" {
+			order.Items[i].ID = uuid.New().String()
+		}
+		order.Items[i].Total = float64(order.Items[i].Quantity) * order.Items[i].Price
+		grandTotal += order.Items[i].Total
+	}
+	order.GrandTotal = grandTotal
+
+	// Mevcut durumu status history'den al
+	if len(order.StatusHistory) > 0 {
+		order.CurrentStatus = order.StatusHistory[len(order.StatusHistory)-1].Status
+	}
+
+	// JSON'a çevir
+	data, err := json.Marshal(order)
+	if err != nil {
+		return fmt.Errorf("JSON dönüştürme hatası: %w", err)
+	}
+
+	// Bleve'e indexle
+	if err := s.index.Index("whatsapp_order_"+order.ID, order); err != nil {
+		return fmt.Errorf("indexleme hatası: %w", err)
+	}
+
+	// JSON dosyası olarak sakla
+	orderFile := filepath.Join(s.dataPath, "whatsapp_orders", order.ID+".json")
+	if err := os.MkdirAll(filepath.Dir(orderFile), 0755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(orderFile, data, 0644); err != nil {
+		return fmt.Errorf("dosya yazma hatası: %w", err)
+	}
+
+	return nil
+}
+
+// GetWhatsAppOrder - WhatsApp siparişi getir
+func (s *BleveStore) GetWhatsAppOrder(id string) (*WhatsAppOrder, error) {
+	orderFile := filepath.Join(s.dataPath, "whatsapp_orders", id+".json")
+	data, err := os.ReadFile(orderFile)
+	if err != nil {
+		return nil, fmt.Errorf("sipariş bulunamadı: %w", err)
+	}
+
+	var order WhatsAppOrder
+	if err := json.Unmarshal(data, &order); err != nil {
+		return nil, fmt.Errorf("JSON çözümleme hatası: %w", err)
+	}
+
+	return &order, nil
+}
+
+// ListWhatsAppOrders - Tüm WhatsApp siparişlerini listele
+func (s *BleveStore) ListWhatsAppOrders() ([]*WhatsAppOrder, error) {
+	ordersDir := filepath.Join(s.dataPath, "whatsapp_orders")
+
+	// Dizin yoksa boş liste döndür
+	if _, err := os.Stat(ordersDir); os.IsNotExist(err) {
+		return []*WhatsAppOrder{}, nil
+	}
+
+	entries, err := os.ReadDir(ordersDir)
+	if err != nil {
+		return nil, fmt.Errorf("dizin okunamadı: %w", err)
+	}
+
+	var orders []*WhatsAppOrder
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
+			continue
+		}
+
+		id := entry.Name()[:len(entry.Name())-5] // .json uzantısını kaldır
+		order, err := s.GetWhatsAppOrder(id)
+		if err != nil {
+			continue
+		}
+		orders = append(orders, order)
+	}
+
+	// Tarihe göre sırala (en yeni önce)
+	sort.Slice(orders, func(i, j int) bool {
+		return orders[i].Date.After(orders[j].Date)
+	})
+
+	return orders, nil
+}
+
+// DeleteWhatsAppOrder - WhatsApp siparişi sil
+func (s *BleveStore) DeleteWhatsAppOrder(id string) error {
+	// Bleve'den sil
+	if err := s.index.Delete("whatsapp_order_" + id); err != nil {
+		return fmt.Errorf("index silme hatası: %w", err)
+	}
+
+	// Dosyadan sil
+	orderFile := filepath.Join(s.dataPath, "whatsapp_orders", id+".json")
+	if err := os.Remove(orderFile); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("dosya silme hatası: %w", err)
+	}
+
+	return nil
+}
+
+// SearchWhatsAppOrders - WhatsApp siparişlerinde arama yap
+func (s *BleveStore) SearchWhatsAppOrders(searchTerm string) ([]*WhatsAppOrder, error) {
+	if searchTerm == "" {
+		return s.ListWhatsAppOrders()
+	}
+
+	allOrders, err := s.ListWhatsAppOrders()
+	if err != nil {
+		return nil, err
+	}
+
+	searchLower := strings.ToLower(searchTerm)
+	var filtered []*WhatsAppOrder
+	for _, order := range allOrders {
+		// Müşteri adı, telefon ve ürün adlarında ara
+		if strings.Contains(strings.ToLower(order.CustomerName), searchLower) ||
+			strings.Contains(strings.ToLower(order.CustomerPhone), searchLower) {
+			filtered = append(filtered, order)
+			continue
+		}
+
+		// Sipariş kalemlerinde ara
+		for _, item := range order.Items {
+			if strings.Contains(strings.ToLower(item.ProductName), searchLower) {
+				filtered = append(filtered, order)
+				break
+			}
+		}
+	}
+
+	return filtered, nil
+}
+
+// AddWhatsAppOrderStatus - Siparişe yeni durum ekle
+func (s *BleveStore) AddWhatsAppOrderStatus(orderID string, status string, note string) error {
+	order, err := s.GetWhatsAppOrder(orderID)
+	if err != nil {
+		return err
+	}
+
+	// Yeni durum kaydı oluştur
+	newStatus := WhatsAppOrderStatus{
+		ID:        uuid.New().String(),
+		Status:    status,
+		Note:      note,
+		Timestamp: time.Now(),
+	}
+
+	order.StatusHistory = append(order.StatusHistory, newStatus)
+	order.CurrentStatus = status
+
+	return s.SaveWhatsAppOrder(order)
+}
+
+// FilterWhatsAppOrdersByStatus - Duruma göre siparişleri filtrele
+func (s *BleveStore) FilterWhatsAppOrdersByStatus(status string) ([]*WhatsAppOrder, error) {
+	allOrders, err := s.ListWhatsAppOrders()
+	if err != nil {
+		return nil, err
+	}
+
+	if status == "" || status == "all" {
+		return allOrders, nil
+	}
+
+	var filtered []*WhatsAppOrder
+	for _, order := range allOrders {
+		if order.CurrentStatus == status {
+			filtered = append(filtered, order)
+		}
+	}
+
+	return filtered, nil
 }

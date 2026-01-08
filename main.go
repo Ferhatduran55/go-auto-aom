@@ -107,6 +107,7 @@ func main() {
 	bindStockFunctions(w)
 	bindSettingsFunctions(w)
 	bindNoteFunctions(w)
+	bindWhatsAppOrderFunctions(w)
 
 	w.Navigate(fmt.Sprintf("http://127.0.0.1:%d/", port))
 	w.Run()
@@ -174,6 +175,17 @@ func bindNoteFunctions(w webview2.WebView) {
 	w.Bind("deleteNote", deleteNote)
 	w.Bind("searchNotes", searchNotes)
 	w.Bind("autoFormatText", autoFormatText)
+}
+
+// bindWhatsAppOrderFunctions binds WhatsApp order functions to WebView
+func bindWhatsAppOrderFunctions(w webview2.WebView) {
+	w.Bind("saveWhatsAppOrder", saveWhatsAppOrder)
+	w.Bind("loadWhatsAppOrders", loadWhatsAppOrders)
+	w.Bind("loadWhatsAppOrderById", loadWhatsAppOrderById)
+	w.Bind("deleteWhatsAppOrder", deleteWhatsAppOrder)
+	w.Bind("searchWhatsAppOrders", searchWhatsAppOrders)
+	w.Bind("addWhatsAppOrderStatus", addWhatsAppOrderStatus)
+	w.Bind("filterWhatsAppOrdersByStatus", filterWhatsAppOrdersByStatus)
 }
 
 // =============================================================================
@@ -920,4 +932,139 @@ func searchNotes(searchTerm string) string {
 func autoFormatText(rawText string) string {
 	formatted := storage.AutoFormatText(rawText)
 	return jsonMarshal(map[string]string{"formatted": formatted})
+}
+
+// =============================================================================
+// WhatsApp Order Functions
+// =============================================================================
+
+// saveWhatsAppOrder saves or updates a WhatsApp order
+func saveWhatsAppOrder(orderJSON string) string {
+	var orderData struct {
+		ID            string                      `json:"id"`
+		Date          string                      `json:"date"` // ISO string from frontend
+		CustomerName  string                      `json:"customer_name"`
+		CustomerPhone string                      `json:"customer_phone"`
+		PaymentMethod string                      `json:"payment_method"`
+		PaymentNote   string                      `json:"payment_note"`
+		Items         []storage.WhatsAppOrderItem `json:"items"`
+	}
+
+	if err := json.Unmarshal([]byte(orderJSON), &orderData); err != nil {
+		return jsonError(err)
+	}
+
+	// Parse date
+	var orderDate time.Time
+	if orderData.Date != "" {
+		// Try parsing ISO format first, then date-only format
+		var err error
+		orderDate, err = time.Parse(time.RFC3339, orderData.Date)
+		if err != nil {
+			orderDate, err = time.Parse("2006-01-02", orderData.Date)
+			if err != nil {
+				orderDate = time.Now()
+			}
+		}
+	} else {
+		orderDate = time.Now()
+	}
+
+	order := &storage.WhatsAppOrder{
+		ID:            orderData.ID,
+		Date:          orderDate,
+		CustomerName:  orderData.CustomerName,
+		CustomerPhone: orderData.CustomerPhone,
+		PaymentMethod: orderData.PaymentMethod,
+		PaymentNote:   orderData.PaymentNote,
+		Items:         orderData.Items,
+	}
+
+	// Mevcut siparişi güncelle veya yeni oluştur
+	if orderData.ID != "" {
+		existingOrder, err := store.GetWhatsAppOrder(orderData.ID)
+		if err == nil {
+			order.CreatedAt = existingOrder.CreatedAt
+			order.StatusHistory = existingOrder.StatusHistory
+			order.CurrentStatus = existingOrder.CurrentStatus
+		}
+	}
+
+	if err := store.SaveWhatsAppOrder(order); err != nil {
+		return jsonError(err)
+	}
+
+	return fmt.Sprintf(`{"success": true, "id": "%s"}`, order.ID)
+}
+
+// loadWhatsAppOrders loads all WhatsApp orders, optionally filtered by search term
+func loadWhatsAppOrders(searchTerm string) string {
+	var orders []*storage.WhatsAppOrder
+	var err error
+
+	if searchTerm != "" {
+		orders, err = store.SearchWhatsAppOrders(searchTerm)
+	} else {
+		orders, err = store.ListWhatsAppOrders()
+	}
+
+	if err != nil {
+		return jsonError(err)
+	}
+
+	return jsonMarshal(orders)
+}
+
+// loadWhatsAppOrderById loads a single WhatsApp order by ID
+func loadWhatsAppOrderById(id string) string {
+	order, err := store.GetWhatsAppOrder(id)
+	if err != nil {
+		return jsonError(err)
+	}
+	return jsonMarshal(order)
+}
+
+// deleteWhatsAppOrder deletes a WhatsApp order by ID
+func deleteWhatsAppOrder(id string) string {
+	if err := store.DeleteWhatsAppOrder(id); err != nil {
+		return jsonError(err)
+	}
+	return jsonSuccess()
+}
+
+// searchWhatsAppOrders searches WhatsApp orders by term
+func searchWhatsAppOrders(searchTerm string) string {
+	orders, err := store.SearchWhatsAppOrders(searchTerm)
+	if err != nil {
+		return jsonError(err)
+	}
+	return jsonMarshal(orders)
+}
+
+// addWhatsAppOrderStatus adds a new status to a WhatsApp order
+func addWhatsAppOrderStatus(statusJSON string) string {
+	var data struct {
+		OrderID string `json:"order_id"`
+		Status  string `json:"status"`
+		Note    string `json:"note"`
+	}
+
+	if err := json.Unmarshal([]byte(statusJSON), &data); err != nil {
+		return jsonError(err)
+	}
+
+	if err := store.AddWhatsAppOrderStatus(data.OrderID, data.Status, data.Note); err != nil {
+		return jsonError(err)
+	}
+
+	return jsonSuccess()
+}
+
+// filterWhatsAppOrdersByStatus filters WhatsApp orders by status
+func filterWhatsAppOrdersByStatus(status string) string {
+	orders, err := store.FilterWhatsAppOrdersByStatus(status)
+	if err != nil {
+		return jsonError(err)
+	}
+	return jsonMarshal(orders)
 }
