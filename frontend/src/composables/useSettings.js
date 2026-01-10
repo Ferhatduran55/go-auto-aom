@@ -117,8 +117,18 @@ watch(settings, () => {
 // - pre-release: Ön Sürüm (amber)
 const changelog = [
   {
-    version: '26.1.1',
+    version: '26.1.2',
     status: ['latest', 'pre-release', 'unstable'],
+    date: '2026-01-08',
+    changes: [
+      'Hızlı sipariş desteği eklendi',
+      'Notlar özelliği: not oluşturma, düzenleme, silme ve arama; çeşitli hata düzeltmeleri',
+      'Diğer küçük iyileştirmeler ve kararlılık düzeltmeleri'
+    ]
+  },
+  {
+    version: '26.1.1',
+    status: ['pre-release', 'unstable'],
     date: '2026-01-06',
     changes: [
       'Notlar (quick notes) özelliği eklendi: not oluşturma, düzenleme, silme ve arama',
