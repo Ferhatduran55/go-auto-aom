@@ -182,6 +182,21 @@
             </label>
           </div>
           
+          <div class="setting-group">
+            <label class="setting-toggle">
+              <input 
+                type="checkbox" 
+                v-model="settings.hideCriticalStockWarning"
+                @change="saveSettings"
+              />
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">
+                <strong>Kritik Stok Uyarısını Gizle</strong>
+                <small>Üst menüdeki kritik stok uyarı rozetini gizle</small>
+              </span>
+            </label>
+          </div>
+          
           <!-- Restart Required Notice -->
           <div v-if="restartRequired" class="restart-notice">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

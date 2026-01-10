@@ -78,7 +78,7 @@
       <div 
         v-for="order in orders" 
         :key="order.id"
-        @click="$emit('loadOrder', order.id)"
+        @click="handleOrderClick(order.id)"
         :class="['order-card', { active: order.id === currentOrderId }]"
       >
         <div class="flex items-center gap-2 font-bold mb-2" style="color: var(--text-primary);">
@@ -96,7 +96,7 @@
           <div class="font-extrabold text-success text-lg">₺{{ formatPrice(order.grand_total || 0) }}</div>
         </div>
         <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t" style="border-color: var(--border-color);">
-          <button @click.stop="$emit('loadOrder', order.id)" class="btn btn-sm btn-secondary">📝 Düzenle</button>
+          <button @click.stop="handleOrderClick(order.id)" class="btn btn-sm btn-secondary">📝 Düzenle</button>
           <button @click.stop="$emit('deleteOrder', order.id)" class="btn btn-sm btn-danger">🗑️ Sil</button>
         </div>
       </div>
@@ -146,6 +146,14 @@ function formatPrice(n) {
 
 function formatDate(d) {
   return d ? new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
+}
+
+// Sipariş kartına tıklandığında - aynı siparişe tıklanırsa hiçbir şey yapma
+function handleOrderClick(orderId) {
+  if (orderId === currentOrderId.value) {
+    return // Aynı sipariş zaten açık, yeniden yükleme
+  }
+  emit('loadOrder', orderId)
 }
 
 async function loadOrders() {

@@ -24,6 +24,7 @@
         <div class="mb-4 relative">
           <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">Ürün Adı</label>
           <input 
+            ref="productNameInput"
             type="text" 
             v-model="form.name" 
             @input="onProductInput"
@@ -174,6 +175,7 @@ const partStatusOptions = [
 const showProductDropdown = ref(false)
 const showOEMDropdown = ref(false)
 const showConflictModal = ref(false)
+const productNameInput = ref(null)
 const conflictData = reactive({
   oem: '',
   existingName: '',
@@ -282,6 +284,11 @@ function clearForm() {
   form.unitPrice = ''
   form.partStatus = 'original'
   editingProductId.value = null
+  
+  // Ürün adı input'una focus ver
+  setTimeout(() => {
+    productNameInput.value?.focus()
+  }, 50)
 }
 
 function cancelEdit() {

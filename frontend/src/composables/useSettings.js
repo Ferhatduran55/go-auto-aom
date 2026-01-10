@@ -11,6 +11,7 @@ const settings = ref({
   // Stock settings
   autoDeductStock: false,
   defaultUnit: 'adet',
+  hideCriticalStockWarning: false, // Kritik stok uyarısını gizle
   
   // Developer settings
   developerMode: false,
@@ -116,8 +117,18 @@ watch(settings, () => {
 // - pre-release: Ön Sürüm (amber)
 const changelog = [
   {
+    version: '26.1.1',
+    status: ['latest', 'pre-release', 'unstable'],
+    date: '2026-01-06',
+    changes: [
+      'Notlar (quick notes) özelliği eklendi: not oluşturma, düzenleme, silme ve arama',
+      'Notlar için frontend bileşenleri ve stil eklendi (not listesi, editör, UI iyileştirmeleri)',
+      'Metin otomatik formatlama ve çeşitli küçük hata düzeltmeleri'
+    ]
+  },
+  {
     version: '25.12.3',
-    status: ['latest', 'stable'],
+    status: ['incompatible'],
     date: '2025-12-29',
     changes: [
       'Bleve index adı `auto_management_index` olarak değiştirildi',
