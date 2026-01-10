@@ -34,7 +34,7 @@ import (
 const (
 	AppName    = "AutoManagement"
 	AppTitle   = "AutoManagement - Oto Yönetim Sistemi"
-	AppVersion = "25.12.3"
+	AppVersion = "26.1.1"
 )
 
 // Window configuration
