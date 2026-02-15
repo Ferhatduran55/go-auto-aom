@@ -7,7 +7,7 @@
             <path d="M12 5v14"></path>
             <path d="M5 12h14"></path>
           </svg>
-          Stok Girişi
+          {{ t('stock.entry') }}
         </h2>
         <button @click="$emit('close')" class="close-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -23,13 +23,13 @@
           :class="{ active: activeTab === 'single' }" 
           @click="activeTab = 'single'"
         >
-          Tekli Giriş
+          {{ t('stock.singleEntry') }}
         </button>
         <button 
           :class="{ active: activeTab === 'bulk' }" 
           @click="activeTab = 'bulk'"
         >
-          Toplu Giriş
+          {{ t('stock.bulkEntry') }}
         </button>
       </div>
       
@@ -37,7 +37,7 @@
         <!-- Single Entry Form -->
         <div v-if="activeTab === 'single'" class="form-section">
           <div class="form-group">
-            <label>Ürün *</label>
+            <label>{{ t('stock.productRequired') }}</label>
             <div class="autocomplete-wrapper" ref="autocompleteRef">
               <div class="autocomplete-input-container">
                 <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -54,7 +54,7 @@
                   @keydown.enter.prevent="selectHighlighted"
                   @keydown.escape="showDropdown = false"
                   class="form-input autocomplete-input"
-                  :placeholder="product ? '' : 'Ürün adı veya OEM ile ara...'"
+                  :placeholder="product ? '' : t('stock.productSearchPlaceholder')"
                   :disabled="product !== null"
                 />
                 <button 
@@ -80,7 +80,7 @@
                   </span>
                 </div>
                 <span class="stock-badge">
-                  Stok: {{ formatQuantity(selectedProductDetail.stock_quantity, selectedProductDetail.unit) }} {{ selectedProductDetail.unit }}
+                  {{ t('stock.currentStock') }}: {{ formatQuantity(selectedProductDetail.stock_quantity, selectedProductDetail.unit, locale.value) }} {{ translateUnit(selectedProductDetail.unit) }}
                 </span>
               </div>
               
@@ -95,7 +95,7 @@
                 >
                   <div class="item-main">
                     <span class="item-name">{{ p.name }}</span>
-                    <span class="item-stock">{{ formatQuantity(p.stock_quantity, p.unit) }} {{ p.unit }}</span>
+                    <span class="item-stock">{{ formatQuantity(p.stock_quantity, p.unit, locale.value) }} {{ translateUnit(p.unit) }}</span>
                   </div>
                   <div class="item-meta">
                     <span v-if="p.oem_number">OEM: {{ p.oem_number }}</span>
@@ -107,52 +107,52 @@
               
               <!-- No Results -->
               <div v-if="showDropdown && searchQuery.length >= 2 && filteredProducts.length === 0" class="autocomplete-dropdown">
-                <div class="no-results">Sonuç bulunamadı</div>
+                <div class="no-results">{{ t('common.noResults') }}</div>
               </div>
             </div>
           </div>
           
           <div class="form-row">
             <div class="form-group">
-              <label>Miktar *</label>
+              <label>{{ t('stock.quantityRequired') }}</label>
               <input 
                 type="number" 
                 v-model.number="singleForm.amount" 
                 :step="selectedProductDetail?.unit === 'litre' ? '0.1' : '1'"
                 :min="selectedProductDetail?.unit === 'litre' ? '0.1' : '1'"
                 class="form-input"
-                placeholder="Girilecek miktar"
+                :placeholder="t('stock.entryPlaceholder')"
               />
             </div>
             <div class="form-group unit-display">
-              <label>Birim</label>
+              <label>{{ t('common.unit') }}</label>
               <div class="unit-badge">{{ selectedProductDetail?.unit || 'adet' }}</div>
             </div>
           </div>
           
           <div class="form-group">
-            <label>Açıklama</label>
+            <label>{{ t('common.description') }}</label>
             <textarea 
               v-model="singleForm.note" 
               class="form-input"
               rows="3"
-              placeholder="Stok girişi açıklaması (opsiyonel)"
+              :placeholder="t('stock.noteOptional')"
             ></textarea>
           </div>
           
           <!-- Preview -->
           <div v-if="selectedProductDetail && singleForm.amount > 0" class="preview-box">
             <div class="preview-row">
-              <span>Mevcut Stok:</span>
-              <strong>{{ formatQuantity(selectedProductDetail.stock_quantity, selectedProductDetail.unit) }} {{ selectedProductDetail.unit }}</strong>
+              <span>{{ t('stock.currentStock') }}:</span>
+              <strong>{{ formatQuantity(selectedProductDetail.stock_quantity, selectedProductDetail.unit, locale.value) }} {{ translateUnit(selectedProductDetail.unit) }}</strong>
             </div>
             <div class="preview-row">
-              <span>Eklenecek:</span>
-              <strong class="text-success">+{{ formatQuantity(singleForm.amount, selectedProductDetail.unit) }} {{ selectedProductDetail.unit }}</strong>
+              <span>{{ t('stock.toBeAdded') }}:</span>
+              <strong class="text-success">+{{ formatQuantity(singleForm.amount, selectedProductDetail.unit, locale.value) }} {{ translateUnit(selectedProductDetail.unit) }}</strong>
             </div>
             <div class="preview-row total">
-              <span>Yeni Stok:</span>
-              <strong>{{ formatQuantity(selectedProductDetail.stock_quantity + singleForm.amount, selectedProductDetail.unit) }} {{ selectedProductDetail.unit }}</strong>
+              <span>{{ t('stock.newStock') }}:</span>
+              <strong>{{ formatQuantity(selectedProductDetail.stock_quantity + singleForm.amount, selectedProductDetail.unit, locale.value) }} {{ translateUnit(selectedProductDetail.unit) }}</strong>
             </div>
           </div>
         </div>
@@ -160,13 +160,13 @@
         <!-- Bulk Entry Form -->
         <div v-else class="form-section">
           <div class="bulk-header">
-            <span>{{ bulkEntries.filter(e => e.productId).length }} ürün seçildi</span>
+            <span>{{ t('stock.productsSelected', { count: bulkEntries.filter(e => e.productId).length }) }}</span>
             <button @click="addBulkRow" class="btn btn-sm btn-secondary">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 5v14"></path>
                 <path d="M5 12h14"></path>
               </svg>
-              Satır Ekle
+              {{ t('common.addRow') }}
             </button>
           </div>
           
@@ -176,7 +176,7 @@
                 <AutocompleteSelect
                   v-model="entry.productId"
                   :items="productOptions"
-                  placeholder="Ürün seçin..."
+                  :placeholder="t('stock.selectProduct')"
                   meta-key="meta"
                 />
               </div>
@@ -187,14 +187,14 @@
                 :step="getProductUnit(entry.productId) === 'litre' ? '0.1' : '1'"
                 min="0.1"
                 class="form-input amount-col"
-                placeholder="Miktar"
+                :placeholder="t('common.quantity')"
               />
               
               <input 
                 type="text" 
                 v-model="entry.note" 
                 class="form-input note-col"
-                placeholder="Açıklama"
+                :placeholder="t('common.description')"
               />
               
               <button @click="removeBulkRow(index)" class="btn-icon btn-icon-danger">
@@ -207,7 +207,7 @@
           </div>
           
           <div v-if="bulkEntries.length === 0" class="empty-state">
-            <p>Toplu giriş için satır ekleyin</p>
+            <p>{{ t('stock.addRowsForBulkEntry') }}</p>
           </div>
         </div>
         
@@ -223,14 +223,14 @@
       </div>
       
       <div class="modal-footer">
-        <button @click="$emit('close')" class="btn btn-secondary">İptal</button>
+        <button @click="$emit('close')" class="btn btn-secondary">{{ t('common.cancel') }}</button>
         <button 
           @click="save" 
           class="btn btn-success"
           :disabled="saving || !formValid"
         >
           <span v-if="saving" class="loading-spinner-sm"></span>
-          {{ activeTab === 'single' ? 'Stok Ekle' : 'Toplu Ekle' }}
+          {{ activeTab === 'single' ? t('stock.addStock') : t('stock.bulkAddStock') }}
         </button>
       </div>
     </div>
@@ -240,8 +240,18 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useStock } from '../composables/useStock'
+import { useI18n } from '@/i18n'
 import AutocompleteSelect from './AutocompleteSelect.vue'
 
+const { t, locale } = useI18n()
+
+function translateUnit(unit) {
+  if (!unit) return '-'
+  const map = { 'adet': 'piece', 'kg': 'kg', 'litre': 'liter', 'kutu': 'box', 'paket': 'pack', 'set': 'set' }
+  const key = map[unit] || unit
+  const translated = t(`units.${key}`)
+  return (translated && translated !== `units.${key}`) ? translated : unit
+}
 const props = defineProps({
   product: {
     type: Object,

@@ -8,17 +8,19 @@ import (
 
 // AppSettings represents application settings stored on disk
 type AppSettings struct {
-	DeveloperMode bool   `json:"developerMode"`
-	Theme         string `json:"theme"`
-	ItemsPerPage  int    `json:"itemsPerPage"`
+	DeveloperMode   bool   `json:"developerMode"`
+	Theme           string `json:"theme"`
+	ItemsPerPage    int    `json:"itemsPerPage"`
+	AutoUpdateCheck bool   `json:"autoUpdateCheck"` // Uygulama açılışında güncelleme kontrolü
 }
 
 // DefaultSettings returns default application settings
 func DefaultSettings() *AppSettings {
 	return &AppSettings{
-		DeveloperMode: false,
-		Theme:         "dark",
-		ItemsPerPage:  25,
+		DeveloperMode:   false,
+		Theme:           "dark",
+		ItemsPerPage:    25,
+		AutoUpdateCheck: true, // Varsayılan olarak açık
 	}
 }
 

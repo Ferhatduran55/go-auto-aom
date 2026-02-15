@@ -9,8 +9,8 @@
           <div class="mt-2" style="color: var(--text-muted);">{{ confirmMessage }}</div>
         </div>
         <div class="modal-actions grid-cols-2">
-          <button @click="closeConfirm" class="btn btn-secondary">İptal</button>
-          <button @click="executeConfirm" class="btn btn-danger">Onayla</button>
+          <button @click="closeConfirm" class="btn btn-secondary">{{ t('common.cancel') }}</button>
+          <button @click="executeConfirm" class="btn btn-danger">{{ t('common.confirm') }}</button>
         </div>
       </div>
     </div>
@@ -22,12 +22,12 @@
           <div class="text-5xl">📊</div>
           <div class="text-xl font-bold mt-4" style="color: var(--text-primary);">{{ historyCustomer?.name }}</div>
           <div class="mt-2" style="color: var(--text-muted);">
-            {{ historyOrders.length }} sipariş • Toplam: ₺{{ formatPrice(historyCustomer?.total_amount || 0) }}
+            {{ historyOrders.length }} {{ t('common.order') }} • {{ t('common.total') }}: {{ currency }}{{ formatPrice(historyCustomer?.total_amount || 0) }}
           </div>
         </div>
         <div class="modal-body max-h-[400px] overflow-y-auto">
           <div v-if="historyOrders.length === 0" class="text-center py-8" style="color: var(--text-muted);">
-            <p>Sipariş bulunamadı</p>
+            <p>{{ t('orders.noOrders') }}</p>
           </div>
           <div 
             v-for="order in historyOrders" 
@@ -35,18 +35,18 @@
             @click="loadFromHistory(order.id)"
             class="order-history-card"
           >
-            <div class="font-bold" style="color: var(--text-primary);">📋 {{ order.title || 'İsimsiz' }}</div>
+            <div class="font-bold" style="color: var(--text-primary);">📋 {{ order.title || t('orders.unnamed') }}</div>
             <div class="flex justify-between items-center mt-2">
               <div class="flex gap-4 text-xs" style="color: var(--text-muted);">
                 <span>📦 {{ order.items?.length || 0 }}</span>
                 <span>📅 {{ formatDate(order.created_at) }}</span>
               </div>
-              <div class="font-bold text-success">₺{{ formatPrice(order.grand_total || 0) }}</div>
+              <div class="font-extrabold text-success">{{ currency }}{{ formatPrice(order.grand_total || 0) }}</div> 
             </div>
           </div>
         </div>
         <div class="modal-actions grid-cols-1">
-          <button @click="closeHistory" class="btn btn-secondary btn-block">Kapat</button>
+          <button @click="closeHistory" class="btn btn-secondary btn-block">{{ t('common.close') }}</button>
         </div>
       </div>
     </div>
@@ -56,19 +56,19 @@
       <div class="modal max-w-xl">
         <div class="modal-header">
           <div class="text-5xl">🔎</div>
-          <div class="text-xl font-bold mt-4" style="color: var(--text-primary);">Gelişmiş Sipariş Arama</div>
-          <div class="mt-2" style="color: var(--text-muted);">Birden fazla kriter ile filtreleme yapın</div>
+          <div class="text-xl font-bold mt-4" style="color: var(--text-primary);">{{ t('orders.advancedOrderSearch') }}</div>
+          <div class="mt-2" style="color: var(--text-muted);">{{ t('orders.advancedSearchSubtitle') }}</div>
         </div>
         <div class="modal-body">
           <!-- Product Name -->
           <div class="mb-4 relative">
-            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">📦 Ürün Adı İçeren</label>
+            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">📦 {{ t('orders.productNameContains') }}</label>
             <input 
               type="text" 
               v-model="advSearch.productName" 
               @input="onAdvProductInput"
               class="form-input" 
-              placeholder="Ürün adı..."
+              :placeholder="t('products.namePlaceholder')"
               autocomplete="off"
             >
             <div v-if="advProductDropdown.length > 0" class="dropdown-menu">
@@ -81,13 +81,13 @@
           
           <!-- OEM Number -->
           <div class="mb-4 relative">
-            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">🔢 OEM Numarası İçeren</label>
+            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">🔢 {{ t('orders.oemContains') }}</label>
             <input 
               type="text" 
               v-model="advSearch.oemNumber" 
               @input="onAdvOEMInput"
               class="form-input" 
-              placeholder="OEM kodu..."
+              :placeholder="t('products.oemPlaceholder')"
               autocomplete="off"
             >
             <div v-if="advOEMDropdown.length > 0" class="dropdown-menu">
@@ -100,19 +100,19 @@
           
           <!-- Customer Name -->
           <div class="mb-4 relative">
-            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">👤 Müşteri Adı İçeren</label>
+            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">👤 {{ t('orders.customerNameContains') }}</label>
             <input 
               type="text" 
               v-model="advSearch.customerName" 
               @input="onAdvCustomerInput"
               class="form-input" 
-              placeholder="Müşteri adı..."
+              :placeholder="t('orders.customerNamePlaceholder')"
               autocomplete="off"
             >
             <div v-if="advCustomerDropdown.length > 0" class="dropdown-menu">
               <div v-for="c in advCustomerDropdown" :key="c.id" @click="selectAdvCustomer(c)" class="dropdown-item">
                 <div class="font-semibold">👤 {{ c.name }}</div>
-                <div class="text-sm" style="color: var(--text-muted);">{{ c.order_count || 0 }} sipariş</div>
+                <div class="text-sm" style="color: var(--text-muted);">{{ c.order_count || 0 }} {{ t('common.order') }}</div>
               </div>
             </div>
           </div>
@@ -120,42 +120,42 @@
           <!-- Quantity Filters -->
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">📊 Min. Adet</label>
+              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">📊 {{ t('orders.minQuantity') }}</label>
               <input type="number" v-model.number="advSearch.minQty" min="0" class="form-input" placeholder="0">
             </div>
             <div>
-              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">📊 Max. Adet</label>
-              <input type="number" v-model.number="advSearch.maxQty" min="0" class="form-input" placeholder="Sınırsız">
+              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">📊 {{ t('orders.maxQuantity') }}</label>
+              <input type="number" v-model.number="advSearch.maxQty" min="0" class="form-input" :placeholder="t('common.unlimited')">
             </div>
           </div>
           
           <!-- Total Filters -->
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">💰 Min. Toplam (₺)</label>
+              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">💰 {{ t('orders.minTotal') }}</label>
               <input type="number" v-model.number="advSearch.minTotal" min="0" step="0.01" class="form-input" placeholder="0">
             </div>
             <div>
-              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">💰 Max. Toplam (₺)</label>
-              <input type="number" v-model.number="advSearch.maxTotal" min="0" step="0.01" class="form-input" placeholder="Sınırsız">
+              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">💰 {{ t('orders.maxTotal') }}</label>
+              <input type="number" v-model.number="advSearch.maxTotal" min="0" step="0.01" class="form-input" :placeholder="t('common.unlimited')">
             </div>
           </div>
           
           <!-- Unit Price Filters -->
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">💵 Min. Birim Fiyat (₺)</label>
+              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">💵 {{ t('orders.minUnitPrice') }}</label>
               <input type="number" v-model.number="advSearch.minUnitPrice" min="0" step="0.01" class="form-input" placeholder="0">
             </div>
             <div>
-              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">💵 Max. Birim Fiyat (₺)</label>
-              <input type="number" v-model.number="advSearch.maxUnitPrice" min="0" step="0.01" class="form-input" placeholder="Sınırsız">
+              <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">💵 {{ t('orders.maxUnitPrice') }}</label>
+              <input type="number" v-model.number="advSearch.maxUnitPrice" min="0" step="0.01" class="form-input" :placeholder="t('common.unlimited')">
             </div>
           </div>
         </div>
         <div class="modal-actions grid-cols-2">
-          <button @click="closeAdvancedSearch" class="btn btn-secondary">İptal</button>
-          <button @click="executeAdvancedSearch" class="btn btn-primary">🔍 Ara</button>
+          <button @click="closeAdvancedSearch" class="btn btn-secondary">{{ t('common.cancel') }}</button>
+          <button @click="executeAdvancedSearch" class="btn btn-primary">🔍 {{ t('common.search') }}</button>
         </div>
       </div>
     </div>
@@ -167,7 +167,11 @@ import { ref, reactive, computed } from 'vue'
 import { api } from '@/api'
 import { useOrder } from '@/composables/useOrder'
 import { useToast } from '@/composables/useToast'
+import { useI18n } from '@/i18n'
 
+const { t, locale } = useI18n()
+const { settings } = useSettings()
+const currency = computed(() => settings?.value?.currency || '₺')
 const emit = defineEmits(['advancedSearchResults', 'loadOrder'])
 
 const { allProducts, allCustomers, customerName, currentCustomerId, loadOrder, advancedSearchFilter } = useOrder()
@@ -206,7 +210,7 @@ const historyOrders = ref([])
 async function showHistory() {
   const name = customerName.value?.trim()
   if (!name && !currentCustomerId.value) {
-    showToast('Önce müşteri seçin', 'error')
+    showToast(t('orders.selectCustomerFirst'), 'error')
     return
   }
 
@@ -216,7 +220,7 @@ async function showHistory() {
   )
   
   if (!customer) {
-    showToast('Müşteri bulunamadı', 'error')
+    showToast(t('orders.customerNotFound'), 'error')
     return
   }
 
@@ -325,7 +329,7 @@ async function executeAdvancedSearch() {
                     filter.min_unit_price > 0 || filter.max_unit_price > 0
 
   if (!hasFilter) {
-    showToast('En az bir filtre kriteri girin', 'error')
+    showToast(t('orders.atLeastOneCriteria'), 'error')
     return
   }
 
@@ -335,16 +339,23 @@ async function executeAdvancedSearch() {
   const orders = await api.searchOrdersAdvanced(filter)
   emit('advancedSearchResults', orders)
   closeAdvancedSearch()
-  showToast(`${orders.length} sonuç bulundu`, orders.length > 0 ? 'success' : 'error')
+  showToast(t('orders.resultsFound', { count: orders.length }), orders.length > 0 ? 'success' : 'error')
 }
 
 // Utilities
 function formatPrice(n) {
-  return (n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const loc = locale.value || navigator.language || 'en-US'
+  return (n || 0).toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function formatDate(d) {
-  return d ? new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
+  if (!d) return '-'
+  const loc = locale.value || navigator.language || 'en-US'
+  try {
+    return new Date(d).toLocaleDateString(loc, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return new Date(d).toLocaleString()
+  }
 }
 
 defineExpose({

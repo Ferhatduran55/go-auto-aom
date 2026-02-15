@@ -6,28 +6,28 @@
           <img src="/favicon.ico" alt="Logo" class="w-10 h-10 object-contain" />
         </div>
         <div>
-          <h1 class="text-xl font-extrabold text-white tracking-tight">AutoManagement</h1>
-          <span class="text-sm text-white/80">Oto Yönetim Sistemi</span>
+          <h1 class="text-xl font-extrabold text-white tracking-tight">{{ t('app.title') }}</h1>
+          <span class="text-sm text-white/80">{{ t('app.subtitle') }}</span>
         </div>
       </div>
       <div class="flex gap-3 flex-wrap justify-end items-center">
         <!-- Kritik Stok Badge Slot -->
-        <slot name="kritik-stok"></slot>
+        <slot name="critical-stock"></slot>
         
         <button @click="$emit('showCatalog')" class="header-btn">
-          📚 Katalog
+          📚 {{ t('header.catalog') }}
         </button>
         <button v-if="activeTab === 'orders'" @click="$emit('showHistory')" class="header-btn">
-          📊 Müşteri Geçmişi
+          📊 {{ t('header.customerHistory') }}
         </button>
         <button @click="$emit('newOrder')" class="header-btn header-btn-primary">
-          🆕 Yeni Sipariş
+          🆕 {{ t('header.newOrder') }}
         </button>
         <button @click="toggleTheme" class="header-btn">
-          {{ settings.theme === 'dark' ? '🌙' : '☀️' }} Tema
+          {{ settings.theme === 'dark' ? '🌙' : '☀️' }} {{ t('header.theme') }}
         </button>
         <button @click="$emit('showSettings')" class="header-btn">
-          ⚙️ Ayarlar
+          ⚙️ {{ t('header.settings') }}
         </button>
       </div>
     </div>
@@ -36,6 +36,7 @@
 
 <script setup>
 import { useSettings } from '../composables/useSettings'
+import { useI18n } from '../i18n'
 
 defineProps({
   activeTab: {
@@ -47,6 +48,7 @@ defineProps({
 defineEmits(['showHistory', 'newOrder', 'showCatalog', 'showSettings'])
 
 const { settings, toggleTheme } = useSettings()
+const { t } = useI18n()
 </script>
 
 <style scoped>

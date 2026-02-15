@@ -10,7 +10,7 @@
         <input 
           type="text" 
           v-model="searchQuery" 
-          placeholder="Ürün adı, OEM veya marka ara..."
+          :placeholder="t('products.searchPlaceholder')"
           class="form-input search-input"
           @input="debouncedSearch"
         />
@@ -20,17 +20,17 @@
         <AutocompleteSelect
           v-model="categoryFilter"
           :items="categoryOptions"
-          placeholder="Tüm Kategoriler"
+          :placeholder="t('products.allCategories')"
           @update:modelValue="handleFilterChange"
           class="filter-select"
         />
         
         <label class="critical-filter">
           <input type="checkbox" v-model="onlyCritical" @change="handleFilterChange" />
-          <span class="critical-label">Sadece Kritik Stok</span>
+          <span class="critical-label">{{ t('stock.criticalOnly') }}</span>
         </label>
         
-        <button @click="resetFilters" class="btn btn-secondary btn-sm" title="Filtreleri Temizle">
+        <button @click="resetFilters" class="btn btn-secondary btn-sm" :title="t('stock.clearFilters')">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 6h18"></path>
             <path d="M7 12h10"></path>
@@ -43,34 +43,34 @@
         <!-- Bulk Operations -->
         <template v-if="selectedProducts.length > 0">
           <div class="bulk-indicator">
-            {{ selectedProducts.length }} ürün seçildi
+            {{ t('stock.productsSelected', { count: selectedProducts.length }) }}
           </div>
           <button @click="$emit('bulk-stock-in', selectedProducts)" class="btn btn-success">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 5v14"></path>
               <path d="M5 12h14"></path>
             </svg>
-            Toplu Stok Girişi
+            {{ t('stock.bulkEntry') }}
           </button>
           <button @click="$emit('bulk-stock-out', selectedProducts)" class="btn btn-warning">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M5 12h14"></path>
             </svg>
-            Toplu Stok Çıkışı
+            {{ t('stock.bulkExit') }}
           </button>
           <button @click="$emit('bulk-edit', selectedProducts)" class="btn btn-primary">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
             </svg>
-            Toplu Düzenle
+            {{ t('stock.bulkEdit') }}
           </button>
           <button @click="clearSelection" class="btn btn-secondary btn-sm">
-            Seçimi Temizle
+            {{ t('common.clearSelection') }}
           </button>
         </template>
         
         <template v-else>
-          <button @click="exportCSV" class="btn btn-secondary" title="CSV Dışa Aktar">
+          <button @click="exportCSV" class="btn btn-secondary" :title="t('common.csvExport')">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
@@ -81,14 +81,14 @@
           
           <!-- Column Visibility -->
           <div class="dropdown" ref="columnDropdownRef">
-            <button @click="showColumnDropdown = !showColumnDropdown" class="btn btn-secondary" title="Sütunları Göster/Gizle">
+            <button @click="showColumnDropdown = !showColumnDropdown" class="btn btn-secondary" :title="t('common.showHideColumns')">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="7" height="7"></rect>
                 <rect x="14" y="3" width="7" height="7"></rect>
                 <rect x="14" y="14" width="7" height="7"></rect>
                 <rect x="3" y="14" width="7" height="7"></rect>
               </svg>
-              Sütunlar
+              {{ t('common.columns') }}
             </button>
             <div v-if="showColumnDropdown" class="dropdown-menu">
               <label v-for="col in allColumns" :key="col.key" class="dropdown-item">
@@ -103,20 +103,20 @@
               <path d="M12 5v14"></path>
               <path d="M5 12h14"></path>
             </svg>
-            Stok Girişi
+            {{ t('stock.entry') }}
           </button>
           <button @click="$emit('stokCikis')" class="btn btn-warning">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M5 12h14"></path>
             </svg>
-            Stok Çıkışı
+            {{ t('stock.exit') }}
           </button>
           <button @click="$emit('yeniUrun')" class="btn btn-primary">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 5v14"></path>
               <path d="M5 12h14"></path>
             </svg>
-            Yeni Ürün
+            {{ t('products.new') }}
           </button>
         </template>
       </div>
@@ -151,25 +151,27 @@
                 </template>
               </span>
             </th>
-            <th class="text-center">İşlemler</th>
+            <th class="text-center">{{ t('common.actions') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
             <td :colspan="displayedColumns.length + 2" class="loading-row">
               <div class="loading-spinner"></div>
-              Yükleniyor...
+              {{ t('common.loading') }}
             </td>
           </tr>
           <tr v-else-if="products.length === 0">
             <td :colspan="displayedColumns.length + 2" class="empty-row">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                <path d="m7.5 4.27 9 5.15"></path>
-                <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
-                <path d="m3.3 7 8.7 5 8.7-5"></path>
-                <path d="M12 22V12"></path>
-              </svg>
-              <p>Henüz ürün bulunmuyor</p>
+              <div class="empty-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                  <path d="m7.5 4.27 9 5.15"></path>
+                  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+                  <path d="m3.3 7 8.7 5 8.7-5"></path>
+                  <path d="M12 22V12"></path>
+                </svg>
+                <p>{{ t('products.noProducts') }}</p>
+              </div>
             </td>
           </tr>
           <tr 
@@ -194,7 +196,7 @@
               <span v-if="product.category" class="badge badge-category">{{ product.category }}</span>
               <span v-else>-</span>
             </td>
-            <td v-if="isColumnVisible('unit')" class="text-center">{{ product.unit || 'adet' }}</td>
+            <td v-if="isColumnVisible('unit')" class="text-center">{{ translateUnit(product.unit) }}</td>
             <td v-if="isColumnVisible('stock_quantity')" class="text-center stock-quantity">
               <span :class="{ 'stock-critical': isCriticalStock(product), 'stock-normal': !isCriticalStock(product) }">
                 {{ formatQuantity(product.stock_quantity, product.unit) }}
@@ -208,34 +210,34 @@
                   <path d="M12 9v4"></path>
                   <path d="M12 17h.01"></path>
                 </svg>
-                Kritik
+                {{ t('stock.statusCritical') }}
               </span>
-              <span v-else class="badge badge-success">Normal</span>
+              <span v-else class="badge badge-success">{{ t('stock.statusNormal') }}</span>
             </td>
             <td class="text-center actions-cell">
-              <button @click="$emit('stock-in', product)" class="btn-icon btn-icon-success" title="Stok Girişi">
+              <button @click="$emit('stock-in', product)" class="btn-icon btn-icon-success" :title="t('stock.entry')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 5v14"></path>
                   <path d="M5 12h14"></path>
                 </svg>
               </button>
-              <button @click="$emit('stock-out', product)" class="btn-icon btn-icon-warning" title="Stok Çıkışı" :disabled="product.stock_quantity <= 0">
+              <button @click="$emit('stock-out', product)" class="btn-icon btn-icon-warning" :title="t('stock.exit')" :disabled="product.stock_quantity <= 0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M5 12h14"></path>
                 </svg>
               </button>
-              <button @click="$emit('movements', product)" class="btn-icon btn-icon-info" title="Hareketler">
+              <button @click="$emit('movements', product)" class="btn-icon btn-icon-info" :title="t('stock.movements')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 20h9"></path>
                   <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
                 </svg>
               </button>
-              <button @click="$emit('edit-product', product)" class="btn-icon" title="Düzenle">
+              <button @click="$emit('edit-product', product)" class="btn-icon" :title="t('common.edit')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
                 </svg>
               </button>
-              <button @click="$emit('delete-product', product)" class="btn-icon btn-icon-danger" title="Sil">
+              <button @click="$emit('delete-product', product)" class="btn-icon btn-icon-danger" :title="t('common.delete')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M3 6h18"></path>
                   <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
@@ -251,28 +253,28 @@
     <!-- Footer with Pagination -->
     <div class="table-footer">
       <div class="stats">
-        <span>Toplam: <strong>{{ totalProducts }}</strong> ürün</span>
+        <span>{{ t('common.total') }}: <strong>{{ totalProducts }}</strong> {{ t('common.product') }}</span>
         <span v-if="criticalCount > 0" class="critical-stat">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
             <path d="M12 9v4"></path>
             <path d="M12 17h.01"></path>
           </svg>
-          {{ criticalCount }} ürün kritik stokta
+          {{ t('stock.productsInCritical', { count: criticalCount }) }}
         </span>
       </div>
       
       <!-- Pagination Controls -->
       <div class="pagination">
         <select v-model.number="pageSize" @change="handlePageSizeChange" class="page-size-select">
-          <option :value="10">10 / sayfa</option>
-          <option :value="25">25 / sayfa</option>
-          <option :value="50">50 / sayfa</option>
-          <option :value="100">100 / sayfa</option>
+            <option :value="10">{{ 10 }} / {{ t('common.perPage') }}</option>
+          <option :value="25">{{ 25 }} / {{ t('common.perPage') }}</option>
+          <option :value="50">{{ 50 }} / {{ t('common.perPage') }}</option>
+          <option :value="100">{{ 100 }} / {{ t('common.perPage') }}</option>
         </select>
         
         <div class="page-info">
-          Sayfa {{ currentPage }} / {{ totalPages }}
+          {{ t('common.page') }} {{ currentPage }} / {{ totalPages }}
         </div>
         
         <div class="page-buttons">
@@ -280,7 +282,7 @@
             class="page-btn" 
             :disabled="currentPage <= 1" 
             @click="goToPage(1)"
-            title="İlk Sayfa"
+            :title="t('common.firstPage')"
           >
             ⟪
           </button>
@@ -288,7 +290,7 @@
             class="page-btn" 
             :disabled="currentPage <= 1" 
             @click="goToPage(currentPage - 1)"
-            title="Önceki Sayfa"
+            :title="t('common.prevPage')"
           >
             ◀
           </button>
@@ -296,7 +298,7 @@
             class="page-btn" 
             :disabled="currentPage >= totalPages" 
             @click="goToPage(currentPage + 1)"
-            title="Sonraki Sayfa"
+            :title="t('common.nextPage')"
           >
             ▶
           </button>
@@ -304,7 +306,7 @@
             class="page-btn" 
             :disabled="currentPage >= totalPages" 
             @click="goToPage(totalPages)"
-            title="Son Sayfa"
+            :title="t('common.lastPage')"
           >
             ⟫
           </button>
@@ -318,8 +320,10 @@
 import { ref, computed, watch, onMounted, onUnmounted, defineExpose } from 'vue'
 import { useStock } from '../composables/useStock'
 import { useSettings } from '../composables/useSettings'
+import { useI18n } from '@/i18n'
 import AutocompleteSelect from './AutocompleteSelect.vue'
 
+const { t, locale } = useI18n()
 const props = defineProps({
   filterCritical: {
     type: Boolean,
@@ -353,6 +357,15 @@ const {
 
 const { settings } = useSettings()
 
+function translateUnit(unit) {
+  if (!unit) return '-'
+  // Map common stored unit strings to locale keys
+  const map = { 'adet': 'piece', 'kg': 'kg', 'litre': 'liter', 'kutu': 'box', 'paket': 'pack', 'set': 'set' }
+  const key = map[unit] || unit
+  const translated = t(`units.${key}`)
+  return (translated && translated !== `units.${key}`) ? translated : unit
+}
+
 // Local state
 const searchQuery = ref('')
 const categoryFilter = ref('')
@@ -379,6 +392,8 @@ const allColumns = [
   { key: 'status', label: 'Durum', sortable: false, align: 'center' }
 ]
 
+// Note: labels for displayedColumns are replaced with i18n values via computed displayedColumns
+
 // Convert settings to array format if needed
 function getVisibleColumnsArray() {
   const cols = settings.value.stockListColumns
@@ -393,10 +408,16 @@ function getVisibleColumnsArray() {
 
 const visibleColumns = ref(getVisibleColumnsArray())
 
-// Computed
+// translate column labels reactively using i18n
 const displayedColumns = computed(() => 
-  allColumns.filter(col => visibleColumns.value.includes(col.key))
+  allColumns
+    .filter(col => visibleColumns.value.includes(col.key))
+    .map(col => ({ ...col, label: t(`stock.column.${col.key}`) }))
 )
+
+
+// Computed
+// (kept for compatibility; displayedColumns computed above is used instead)
 
 const allSelected = computed(() => 
   products.value.length > 0 && selectedProducts.value.length === products.value.length
@@ -727,10 +748,20 @@ onUnmounted(() => {
   color: var(--text-primary);
 }
 
-.stock-table tbody tr:hover {
-  background: var(--bg-secondary);
+.empty-row .empty-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem 0;
+  color: var(--text-muted);
 }
 
+.loading-row {
+  text-align: center;
+  padding: 2rem 0;
+}
 .checkbox-col {
   width: 40px;
   text-align: center;

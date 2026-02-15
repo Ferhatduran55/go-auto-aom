@@ -7,9 +7,9 @@
     >
       <span class="flex items-center gap-2">
         <span class="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-        Mevcut sipariş düzenleniyor <!--: #{{ currentOrderId.substring(0, 8) }}-->
+        {{ t('orders.editingCurrent') }} <!--: #{{ currentOrderId.substring(0, 8) }}-->
       </span>
-      <button @click="$emit('newOrder')" class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-semibold transition-colors">Yeni Başla</button>
+      <button @click="$emit('newOrder')" class="px-3 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-semibold transition-colors">{{ t('orders.newStart') }}</button>
     </div>
     
     <!-- Header -->
@@ -18,10 +18,10 @@
         📋
       </div>
       <div class="flex-1">
-        <h3 class="text-lg font-bold" style="color: var(--text-primary);">Sipariş Kalemleri</h3>
+        <h3 class="text-lg font-bold" style="color: var(--text-primary);">{{ t('orders.orderItems') }}</h3>
         <span class="text-sm" style="color: var(--text-muted);">
-          {{ isEditing ? '#' + currentOrderId.substring(0, 8) : 'Yeni sipariş' }}
-          <span v-if="products.length > 0"> • {{ products.length }} ürün</span>
+          {{ isEditing ? '#' + currentOrderId.substring(0, 8) : t('orders.new') }}
+          <span v-if="products.length > 0"> • {{ products.length }} {{ t('common.product') }}</span>
         </span>
       </div>
       <!-- Search Box -->
@@ -30,7 +30,7 @@
           type="text" 
           v-model="searchTerm" 
           class="form-input !py-2 !text-sm w-48" 
-          placeholder="🔍 Ürün ara..."
+          :placeholder="'🔍 ' + t('orders.searchProduct')"
         >
         <button 
           v-if="searchTerm" 
@@ -44,19 +44,19 @@
     <!-- Multi-select Actions Bar -->
     <div v-if="selectedIds.length > 0" class="px-4 py-3 bg-danger/10 border-b flex items-center justify-between" style="border-color: var(--border-color);">
       <span class="text-sm font-semibold" style="color: var(--text-primary);">
-        {{ selectedIds.length }} ürün seçildi
+        {{ t('stock.productsSelected', { count: selectedIds.length }) }}
       </span>
       <div class="flex gap-2">
         <button @click="selectAll" class="btn btn-sm btn-secondary">
-          {{ selectedIds.length === products.length ? '☐ Seçimi Kaldır' : '☑ Tümünü Seç' }}
+          {{ selectedIds.length === products.length ? '☐ ' + t('common.deselectAll') : '☑ ' + t('common.selectAll') }}
         </button>
-        <button @click="deleteSelected" class="btn btn-sm btn-danger">🗑️ Seçilenleri Sil</button>
+        <button @click="deleteSelected" class="btn btn-sm btn-danger">🗑️ {{ t('orders.deleteSelectedProducts') }}</button>
       </div>
     </div>
 
     <!-- Filter Info -->
     <div v-if="hiddenCount > 0" class="px-4 py-2 text-sm text-center" style="background: var(--bg-secondary); color: var(--text-muted);">
-      ⚠️ {{ hiddenCount }} ürün arama koşullarına uygun olmadığından listelenmedi
+      ⚠️ {{ t('orders.hiddenByFilter', { count: hiddenCount }) }}
     </div>
 
     <!-- Table Body -->
@@ -72,12 +72,12 @@
                 class="w-4 h-4 cursor-pointer accent-accent"
               >
             </th>
-            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">Ürün</th>
-            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">OEM</th>
-            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">Adet</th>
-            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">B.Fiyat</th>
-            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">Durum</th>
-            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">Toplam</th>
+            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">{{ t('products.name') }}</th>
+            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">{{ t('common.oem') }}</th>
+            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">{{ t('common.quantity') }}</th>
+            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">{{ t('common.unitPrice') }}</th>
+            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">{{ t('common.status') }}</th>
+            <th class="px-4 py-4 text-left font-bold text-xs uppercase tracking-wide" style="color: var(--text-muted);">{{ t('common.total') }}</th>
             <th class="px-4 py-4"></th>
           </tr>
         </thead>
@@ -100,16 +100,16 @@
             <td class="px-4 py-4 font-semibold" style="color: var(--text-primary);">{{ p.product_name }}</td>
             <td class="px-4 py-4 text-sm" style="color: var(--text-muted);">{{ p.oem_number }}</td>
             <td class="px-4 py-4" style="color: var(--text-primary);">{{ p.quantity }}</td>
-            <td class="px-4 py-4" style="color: var(--text-primary);">₺{{ formatPrice(p.unit_price) }}</td>
+            <td class="px-4 py-4" style="color: var(--text-primary);">{{ currency }}{{ formatPrice(p.unit_price) }}</td>
             <td class="px-4 py-4">
               <span :class="['badge', p.part_status === 'original' ? 'badge-success' : (p.part_status === 'zero' ? 'badge-primary' : 'badge-warning')]">
-                {{ p.part_status === 'original' ? 'Orijinal' : (p.part_status === 'zero' ? 'Sıfır' : 'Çıkma') }}
+                {{ p.part_status === 'original' ? t('orders.conditionOriginal') : (p.part_status === 'zero' ? t('orders.conditionNew') : t('orders.conditionUsed')) }}
               </span>
             </td>
-            <td class="px-4 py-4 font-bold text-success">₺{{ formatPrice(p.total_price) }}</td>
+            <td class="px-4 py-4 font-bold text-success">{{ currency }}{{ formatPrice(p.total_price) }}</td>
             <td class="px-4 py-4">
-              <button @click="editProduct(p.id)" class="action-btn" title="Düzenle">✏️</button>
-              <button @click="$emit('deleteProduct', p.id)" class="action-btn" title="Sil">🗑️</button>
+              <button @click="editProduct(p.id)" class="action-btn" :title="t('common.edit')">✏️</button>
+              <button @click="$emit('deleteProduct', p.id)" class="action-btn" :title="t('common.delete')">🗑️</button>
             </td>
           </tr>
         </tbody>
@@ -118,14 +118,14 @@
       <!-- Empty State -->
       <div v-else-if="products.length === 0" class="text-center py-16" style="color: var(--text-muted);">
         <div class="text-6xl mb-4 opacity-50">📦</div>
-        <p class="text-lg">Ürün eklenmedi</p>
+        <p class="text-lg">{{ t('orders.noItems') }}</p>
       </div>
 
       <!-- No Results State -->
       <div v-else class="text-center py-16" style="color: var(--text-muted);">
         <div class="text-6xl mb-4 opacity-50">🔍</div>
-        <p class="text-lg">Arama sonucu bulunamadı</p>
-        <button @click="searchTerm = ''" class="btn btn-sm btn-secondary mt-4">Aramayı Temizle</button>
+        <p class="text-lg">{{ t('orders.noSearchResults') }}</p>
+        <button @click="searchTerm = ''" class="btn btn-sm btn-secondary mt-4">{{ t('common.clearSearch') }}</button>
       </div>
     </div>
   </div>
@@ -134,7 +134,11 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useOrder } from '@/composables/useOrder'
+import { useI18n } from '@/i18n'
+import { useSettings } from '@/composables/useSettings'
 
+const { t, locale } = useI18n()
+const { settings } = useSettings()
 const emit = defineEmits(['newOrder', 'deleteProduct', 'deleteProducts'])
 
 const { products, currentOrderId, isEditing, editingProductId, deleteProduct } = useOrder()
@@ -164,7 +168,8 @@ const hiddenCount = computed(() => {
 })
 
 function formatPrice(n) {
-  return (n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const loc = locale.value || navigator.language || 'en-US'
+  return (n || 0).toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function editProduct(id) {

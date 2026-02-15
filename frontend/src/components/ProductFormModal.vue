@@ -9,7 +9,7 @@
             <path d="m3.3 7 8.7 5 8.7-5"></path>
             <path d="M12 22V12"></path>
           </svg>
-          {{ editMode ? 'Ürün Düzenle' : 'Yeni Ürün' }}
+          {{ editMode ? t('products.editProduct') : t('products.new') }}
         </h2>
         <button @click="$emit('close')" class="close-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -23,12 +23,12 @@
         <div class="form-section">
           <!-- Ürün Adı -->
           <div class="form-group">
-            <label>Ürün Adı *</label>
+            <label>{{ t('products.nameRequired') }}</label>
             <input 
               type="text" 
               v-model="form.name" 
               class="form-input"
-              placeholder="Örn: Motor Yağı 5W-30"
+              :placeholder="t('products.namePlaceholderExample')"
               ref="firstInput"
             />
           </div>
@@ -36,20 +36,20 @@
           <!-- OEM No ve Marka -->
           <div class="form-row">
             <div class="form-group">
-              <label>OEM Numarası</label>
+              <label>{{ t('products.oemNumber') }}</label>
               <input 
                 type="text" 
                 v-model="form.oem_number" 
                 class="form-input"
-                placeholder="Örn: 1520865F0A"
+                :placeholder="t('products.oemPlaceholderExample')"
               />
             </div>
             <div class="form-group">
-              <label>Marka</label>
+              <label>{{ t('products.brand') }}</label>
               <AutocompleteSelect
                 v-model="form.brand"
                 :items="brandOptions"
-                placeholder="Marka seçin veya yazın..."
+                :placeholder="t('products.brandPlaceholder')"
                 :allow-create="true"
                 @create="handleNewBrand"
               />
@@ -58,11 +58,11 @@
           
           <!-- Category -->
           <div class="form-group">
-            <label>Kategori</label>
+            <label>{{ t('products.category') }}</label>
             <AutocompleteSelect
               v-model="form.category"
               :items="categoryOptions"
-              placeholder="Kategori seçin veya yazın..."
+              :placeholder="t('products.categoryPlaceholder')"
               :allow-create="true"
               @create="handleNewCategory"
             />
@@ -71,28 +71,28 @@
           <!-- Unit and Critical Stock -->
           <div class="form-row">
             <div class="form-group">
-              <label>Birim *</label>
+              <label>{{ t('common.unitRequired') }}</label>
               <AutocompleteSelect
                 v-model="form.unit"
                 :items="unitOptions"
-                placeholder="Birim seçin..."
+                :placeholder="t('products.selectUnit')"
               />
             </div>
             <div class="form-group">
-              <label>Kritik Stok Seviyesi</label>
+              <label>{{ t('stock.criticalLevel') }}</label>
               <input 
                 type="number" 
                 v-model.number="form.critical_stock" 
                 class="form-input"
                 min="1"
-                placeholder="Varsayılan: 3"
+                :placeholder="t('stock.defaultCritical')"
               />
             </div>
           </div>
           
           <!-- Initial Stock (only for new product) -->
           <div v-if="!editMode" class="form-group">
-            <label>Başlangıç Stoku</label>
+            <label>{{ t('products.initialStock') }}</label>
             <div class="stock-input-wrapper">
               <input 
                 type="number" 
@@ -104,7 +104,7 @@
               />
               <span class="unit-suffix">{{ form.unit }}</span>
             </div>
-            <span class="input-hint">Stok girişi daha sonra da yapılabilir</span>
+            <span class="input-hint">{{ t('products.stockLater') }}</span>
           </div>
         </div>
         
@@ -120,14 +120,14 @@
       </div>
       
       <div class="modal-footer">
-        <button @click="$emit('close')" class="btn btn-secondary">İptal</button>
+        <button @click="$emit('close')" class="btn btn-secondary">{{ t('common.cancel') }}</button>
         <button 
           @click="save" 
           class="btn btn-primary"
           :disabled="saving || !formValid"
         >
           <span v-if="saving" class="loading-spinner-sm"></span>
-          {{ editMode ? 'Güncelle' : 'Ürün Ekle' }}
+          {{ editMode ? t('common.update') : t('products.addProduct') }}
         </button>
       </div>
     </div>
@@ -137,8 +137,10 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useStock } from '../composables/useStock'
+import { useI18n } from '@/i18n'
 import AutocompleteSelect from './AutocompleteSelect.vue'
 
+const { t } = useI18n()
 const props = defineProps({
   product: {
     type: Object,
@@ -186,12 +188,12 @@ const brandOptions = computed(() =>
   brands.value.map(b => ({ label: b, value: b }))
 )
 
-const unitOptions = [
-  { label: 'Adet', value: 'adet' },
-  { label: 'Litre', value: 'litre' },
-  { label: 'Kutu', value: 'kutu' },
-  { label: 'Paket', value: 'paket' }
-]
+const unitOptions = computed(() => [
+  { label: t('common.units.piece'), value: 'adet' },
+  { label: t('common.units.liter'), value: 'litre' },
+  { label: t('common.units.box'), value: 'kutu' },
+  { label: t('common.units.package'), value: 'paket' }
+])
 
 // Handle new category creation
 function handleNewCategory(name) {
@@ -212,10 +214,10 @@ function handleNewBrand(name) {
 // Unit label
 const unitLabel = (unit) => {
   const labels = {
-    adet: 'Adet',
-    litre: 'Litre',
-    kutu: 'Kutu',
-    paket: 'Paket'
+    adet: t('common.units.piece'),
+    litre: t('common.units.liter'),
+    kutu: t('common.units.box'),
+    paket: t('common.units.package')
   }
   return labels[unit] || unit
 }
@@ -260,7 +262,7 @@ const save = async () => {
     if (result.error) {
       error.value = result.error
     } else {
-      emit('success', editMode.value ? 'Ürün güncellendi' : 'Ürün eklendi')
+      emit('success', editMode.value ? t('products.updated') : t('products.added'))
       emit('close')
     }
   } finally {

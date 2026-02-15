@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { api } from '../api'
+import { t } from '@/i18n'
 
 // Reactive state
 const products = ref([])
@@ -31,22 +32,22 @@ const totalPages = computed(() => Math.ceil(totalProducts.value / itemsPerPage.v
 // Client-side filtered products (for backward compatibility)
 const filteredProducts = computed(() => {
   let result = [...products.value]
-  
+
   // Search filter
   if (activeFilter.value.search) {
     const q = activeFilter.value.search.toLowerCase()
-    result = result.filter(p => 
+    result = result.filter(p =>
       p.name.toLowerCase().includes(q) ||
       (p.oem_number && p.oem_number.toLowerCase().includes(q)) ||
       (p.brand && p.brand.toLowerCase().includes(q))
     )
   }
-  
+
   // Category filter
   if (activeFilter.value.category) {
     result = result.filter(p => p.category === activeFilter.value.category)
   }
-  
+
   // Only critical stock
   if (activeFilter.value.onlyCritical) {
     result = result.filter(p => {
@@ -54,7 +55,7 @@ const filteredProducts = computed(() => {
       return p.stock_quantity < threshold
     })
   }
-  
+
   return result
 })
 
@@ -72,11 +73,13 @@ const getUnitStep = (unit) => {
 }
 
 // Format quantity based on unit
-const formatQuantity = (quantity, unit) => {
+const formatQuantity = (quantity, unit, loc = (navigator.language || 'en-US')) => {
   if (unit === 'litre') {
-    return parseFloat(quantity).toFixed(1)
+    const val = parseFloat(quantity)
+    try { return new Intl.NumberFormat(loc, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(val) } catch { return val.toFixed(1) }
   }
-  return Math.floor(quantity).toString()
+  const val = Math.floor(quantity)
+  try { return new Intl.NumberFormat(loc).format(val) } catch { return val.toString() }
 }
 
 // Normalize quantity based on unit
@@ -113,11 +116,11 @@ const loadProductsPaginated = async (options = {}) => {
       sortField: options.sortField ?? sortField.value,
       sortDir: options.sortDir ?? sortDir.value
     })
-    
+
     products.value = result.products || []
     totalProducts.value = result.total || 0
     currentPage.value = result.page || 1
-    
+
     await loadCriticalStockProducts()
     return { success: true, total: result.total }
   } catch (error) {
@@ -217,7 +220,7 @@ const handleStockIn = async (productId, amount, note) => {
       await loadProducts()
       return { success: true }
     }
-    return { error: result.error || 'Stock in failed' }
+    return { error: result.error || t('toasts.stockInFailed') }
   } catch (error) {
     return { error: error.message }
   }
@@ -230,7 +233,7 @@ const handleStockOut = async (productId, amount, note) => {
       await loadProducts()
       return { success: true }
     }
-    return { error: result.error || 'Stock out failed' }
+    return { error: result.error || t('toasts.stockOutFailed') }
   } catch (error) {
     return { error: error.message }
   }
@@ -241,13 +244,13 @@ const bulkStockIn = async (entries) => {
     const result = await api.bulkStockIn(entries)
     if (result.success) {
       await loadProducts()
-      return { 
-        success: true, 
-        basarili: result.basarili, 
-        hatalar: result.hatalar 
+      return {
+        success: true,
+        basarili: result.basarili,
+        hatalar: result.hatalar
       }
     }
-    return { error: result.error || 'Bulk stock in failed' }
+    return { error: result.error || t('toasts.bulkStockInFailed') }
   } catch (error) {
     return { error: error.message }
   }
@@ -258,13 +261,13 @@ const bulkStockOut = async (entries) => {
     const result = await api.bulkStockOut(entries)
     if (result.success) {
       await loadProducts()
-      return { 
-        success: true, 
-        basarili: result.basarili, 
-        hatalar: result.hatalar 
+      return {
+        success: true,
+        basarili: result.basarili,
+        hatalar: result.hatalar
       }
     }
-    return { error: result.error || 'Bulk stock out failed' }
+    return { error: result.error || t('toasts.bulkStockOutFailed') }
   } catch (error) {
     return { error: error.message }
   }
@@ -279,7 +282,7 @@ const createProduct = async (productData) => {
       await loadCategories()
       return { success: true, product: result }
     }
-    return { error: result.error || 'Product creation failed' }
+    return { error: result.error || t('toasts.productCreationFailed') }
   } catch (error) {
     return { error: error.message }
   }
@@ -293,7 +296,7 @@ const updateProduct = async (productData) => {
       await loadCategories()
       return { success: true }
     }
-    return { error: result.error || 'Product update failed' }
+    return { error: result.error || t('toasts.productUpdateFailed') }
   } catch (error) {
     return { error: error.message }
   }
@@ -306,7 +309,7 @@ const deleteProduct = async (productId) => {
       await loadProducts()
       return { success: true }
     }
-    return { error: result.error || 'Product deletion failed' }
+    return { error: result.error || t('toasts.productDeletionFailed') }
   } catch (error) {
     return { error: error.message }
   }
@@ -321,7 +324,7 @@ const getStockReport = async (period, date) => {
       stockReport.value = result
       return { success: true, report: result }
     }
-    return { error: result.error || 'Report generation failed' }
+    return { error: result.error || t('toasts.reportGenerationFailed') }
   } catch (error) {
     return { error: error.message }
   } finally {
@@ -360,7 +363,7 @@ export function useStock() {
     loading,
     activeFilter,
     stockReport,
-    
+
     // Pagination state
     currentPage,
     itemsPerPage,
@@ -368,18 +371,18 @@ export function useStock() {
     totalPages,
     sortField,
     sortDir,
-    
+
     // Computed
     filteredProducts,
     criticalStockCount,
     criticalCount: criticalStockCount, // Alias for CriticalStockBadge
-    
+
     // Helpers
     isCriticalStock,
     getUnitStep,
     formatQuantity,
     normalizeQuantity,
-    
+
     // API operations
     loadProducts,
     loadProductsPaginated,
@@ -388,28 +391,28 @@ export function useStock() {
     loadBrands,
     loadUnits,
     loadStockMovements,
-    
+
     // Pagination operations
     goToPage,
     setPageSize,
     setSort,
     applyFilter,
-    
+
     // Stock operations
     handleStockIn,
     handleStockOut,
     bulkStockIn,
     bulkStockOut,
-    
+
     // Product operations
     createProduct,
     updateProduct,
     deleteProduct,
-    
+
     // Report
     getStockReport,
     generateReport: getStockReport,  // Alias for ReportsView.vue
-    
+
     // Other
     resetFilters,
     initialLoad

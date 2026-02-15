@@ -5,8 +5,8 @@
     <div v-if="initialLoading" class="fixed inset-0 z-[2000] flex items-center justify-center bg-black/90">
       <div class="bg-card p-6 rounded-lg text-center shadow-lg flex flex-col items-center gap-4">
         <div class="w-12 h-12 border-4 border-accent rounded-full border-t-transparent animate-spin"></div>
-        <div class="text-2xl font-bold">Verileriniz kurtarılıyor</div>
-        <div class="text-sm text-muted">Lütfen bekleyin...</div>
+        <div class="text-2xl font-bold">{{ t('app.loading') }}</div>
+        <div class="text-sm text-muted">{{ t('common.loading') }}</div>
       </div>
     </div>
 
@@ -19,7 +19,7 @@
         @showCatalog="showCatalog = true"
         @showSettings="showSettings = true"
       >
-      <template #kritik-stok>
+      <template #critical-stock>
         <CriticalStockBadge 
           @stock-in="handleCriticalStockIn" 
           @show-all="handleShowAllCriticalStock"
@@ -43,7 +43,7 @@
               <polyline points="3.29 7 12 12 20.71 7"></polyline>
               <line x1="12" y1="22" x2="12" y2="12"></line>
             </svg>
-            Siparişler
+            {{ t('tabs.orders') }}
           </button>
           <button 
             @click="activeTab = 'stock'" 
@@ -55,7 +55,7 @@
               <path d="m3.3 7 8.7 5 8.7-5"></path>
               <path d="M12 22V12"></path>
             </svg>
-            Stok Yönetimi
+            {{ t('tabs.stock') }}
           </button>
           <button 
             @click="activeTab = 'reports'" 
@@ -65,7 +65,19 @@
               <path d="M3 3v18h18"></path>
               <path d="m19 9-5 5-4-4-3 3"></path>
             </svg>
-            Raporlar
+            {{ t('tabs.reports') }}
+          </button>
+          <!-- Geliştirici Sekmesi (sadece developerMode aktifse) -->
+          <button 
+            v-if="developerMode"
+            @click="activeTab = 'developer'" 
+            :class="['tab-btn developer-tab', { active: activeTab === 'developer' }]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"/>
+              <polyline points="8 6 2 12 8 18"/>
+            </svg>
+            {{ t('settings.developer') }}
           </button>
           <button 
             @click="activeTab = 'notes'" 
@@ -78,7 +90,7 @@
               <line x1="16" y1="17" x2="8" y2="17"></line>
               <line x1="10" y1="9" x2="8" y2="9"></line>
             </svg>
-            Notlar
+            {{ t('tabs.notes') }}
           </button>
           <button 
             @click="activeTab = 'whatsapp'" 
@@ -87,7 +99,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
             </svg>
-            WhatsApp Siparişleri
+            {{ t('tabs.whatsapp') }}
           </button>
         </div>
       </div>
@@ -97,18 +109,22 @@
     <template v-if="activeTab === 'orders'">
       <OrderBar />
       
-      <main class="flex-1 grid grid-cols-[1fr_2fr_1fr] gap-6 p-6 max-w-[1800px] mx-auto w-full">
+      <main class="flex-1 grid grid-cols-4 gap-6 p-6 max-w-[1800px] mx-auto w-full">
         <!-- Left: Product Form -->
-        <ProductForm @clearAll="handleClearAll" />
+        <div class="col-span-1">
+          <ProductForm @clearAll="handleClearAll" />
+        </div>
         
         <!-- Center: Order Items -->
-        <OrderItems 
-          @newOrder="handleNewOrder"
-          @deleteProduct="handleDeleteProduct"
-        />
+        <div class="col-span-2">
+          <OrderItems 
+            @newOrder="handleNewOrder"
+            @deleteProduct="handleDeleteProduct"
+          />
+        </div>
         
         <!-- Right: Summary + Orders List -->
-        <div class="flex flex-col gap-4">
+        <div class="col-span-1 flex flex-col gap-4">
           <!-- Order Summary -->
           <OrderSummary
             @saveOrder="handleSaveOrder"
@@ -176,15 +192,22 @@
       </main>
     </template>
     
+    <!-- Geliştirici View -->
+    <template v-else-if="activeTab === 'developer' && developerMode">
+      <main class="flex-1 p-6 max-w-[1800px] mx-auto w-full">
+        <DeveloperConsole />
+      </main>
+    </template>
+    
     <!-- Footer -->
     <footer class="border-t py-3 px-6 text-center text-sm" style="background: var(--bg-secondary); border-color: var(--border-color); color: var(--text-muted);">
       <div class="flex items-center justify-center gap-2 flex-wrap">
-        <span class="opacity-70">🔓 Open Source</span>
+        <span class="opacity-70">🔓 {{ t('settings.openSource') }}</span>
         <span class="opacity-50">•</span>
-        <span>Sürüm:</span>
-        <span class="font-semibold text-success">26.1.2</span>
+        <span>{{ t('common.version') }}:</span>
+        <span class="font-semibold text-success">{{ appVersion }}</span>
         <span class="opacity-50">•</span>
-        <span>Geliştirici:</span>
+        <span>{{ t('settings.developer') }}:</span>
         <a 
           href="https://github.com/Ferhatduran55" 
           target="_blank" 
@@ -205,7 +228,7 @@
         </a>
       </div>
       <div class="text-xs opacity-50 mt-1">
-        © 2025 Durasoft • MIT License
+        {{ t('settings.copyright', { year: new Date().getFullYear() }) }}
       </div>
     </footer>
     
@@ -271,7 +294,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useOrder } from '@/composables/useOrder'
 import { useToast } from '@/composables/useToast'
 import { useStock } from '@/composables/useStock'
@@ -292,12 +315,26 @@ import StockEntryModal from '@/components/StockEntryModal.vue'
 import StockExitModal from '@/components/StockExitModal.vue'
 import StockMovementsModal from '@/components/StockMovementsModal.vue'
 import ProductFormModal from '@/components/ProductFormModal.vue'
+import DeveloperConsole from '@/components/DeveloperConsole.vue'
 import BulkEditModal from '@/components/BulkEditModal.vue'
 import CriticalStockBadge from '@/components/CriticalStockBadge.vue'
 import ReportsView from '@/components/ReportsView.vue'
 import NotesView from '@/components/NotesView.vue'
 import WhatsAppOrdersView from '@/components/WhatsAppOrdersView.vue'
+import { useI18n } from '@/i18n'
 
+const { t, locale } = useI18n()
+
+const appVersion = ref('')
+
+onMounted(async () => {
+  try {
+    appVersion.value = await api.getAppVersion()
+  } catch (e) {
+    // If API fails, try to use injected version directly or fallback
+    appVersion.value = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
+  }
+})
 const showCatalog = ref(false)
 const showSettings = ref(false)
 const activeTab = ref('orders') // orders | stock | reports | notes
@@ -323,7 +360,9 @@ const {
 const { products: stockProducts, loadProducts: loadStockProducts, deleteProduct: deleteStockProduct, loadStockMovements } = useStock()
 
 const { settings } = useSettings()
+const currency = computed(() => (settings && settings.value && settings.value.currency) || '₺')
 const initialLoading = ref(true)
+const developerMode = ref(false)
 const showProductForm = ref(false)
 const showBulkEdit = ref(false)
 const showOnlyCriticalStock = ref(false)
@@ -350,7 +389,7 @@ function formatPriceBanner(n) {
 // Handlers
 async function handleSaveOrder() {
   if (products.value.length === 0) {
-    showToast('Liste boş', 'error')
+    showToast(t('app.toasts.listEmpty'), 'error')
     return
   }
   
@@ -358,7 +397,7 @@ async function handleSaveOrder() {
   if (result.error) {
     showToast(result.error, 'error')
   } else {
-    showToast('Sipariş kaydedildi')
+    showToast(t('app.toasts.orderSaved'))
     refreshTrigger.value++
   }
 }
@@ -377,14 +416,14 @@ async function handleLoadOrder(id) {
   // Kaydedilmemiş değişiklik varsa uyar
   if (hasUnsavedChanges.value) {
     modals.value.showConfirm(
-      'Kaydedilmemiş Değişiklikler',
-      'Mevcut siparişte kaydedilmemiş değişiklikler var. Devam ederseniz bu değişiklikler kaybolacak. Devam etmek istiyor musunuz?',
+      t('app.confirms.unsavedChangesTitle'),
+      t('app.confirms.unsavedChangesLoad'),
       async () => {
         const result = await loadOrder(id)
         if (result.error) {
-          showToast('Sipariş yüklenemedi', 'error')
+          showToast(t('app.toasts.orderLoadError'), 'error')
         } else {
-          showToast('Sipariş yüklendi')
+          showToast(t('app.toasts.orderLoaded'))
         }
       },
       '⚠️'
@@ -394,19 +433,19 @@ async function handleLoadOrder(id) {
   
   const result = await loadOrder(id)
   if (result.error) {
-    showToast('Sipariş yüklenemedi', 'error')
+    showToast(t('orders.loadError'), 'error')
   } else {
-    showToast('Sipariş yüklendi')
+    showToast(t('orders.loaded'))
   }
 }
 
 function handleDeleteProduct(id) {
   modals.value.showConfirm(
-    'Ürün Silme',
-    'Bu ürünü listeden silmek istediğinize emin misiniz?',
+    t('products.deleteProduct'),
+    t('products.deleteProductConfirm'),
     () => {
       deleteProduct(id)
-      showToast('Ürün silindi')
+      showToast(t('products.productRemoved'))
     },
     '🗑️'
   )
@@ -414,13 +453,13 @@ function handleDeleteProduct(id) {
 
 function handleDeleteOrder(id) {
   modals.value.showConfirm(
-    'Sipariş Silme',
-    'Bu siparişi kalıcı olarak silmek istediğinize emin misiniz?',
+    t('orders.deleteOrder'),
+    t('orders.deleteConfirm'),
     async () => {
       const { api } = await import('@/api')
       const result = await api.deleteOrder(id)
       if (!result.error) {
-        showToast('Sipariş silindi')
+        showToast(t('orders.deleted'))
         if (currentOrderId.value === id) {
           resetOrder()
         }
@@ -435,12 +474,12 @@ function handleNewOrder() {
   // Kaydedilmemiş değişiklik varsa uyar
   if (hasUnsavedChanges.value) {
     modals.value.showConfirm(
-      'Kaydedilmemiş Değişiklikler',
-      'Mevcut siparişte kaydedilmemiş değişiklikler var. Yeni sipariş başlatırsanız bu değişiklikler kaybolacak. Devam etmek istiyor musunuz?',
+      t('app.confirms.unsavedChangesTitle'),
+      t('app.confirms.unsavedChangesNew'),
       () => {
         activeTab.value = 'orders'
         resetOrder()
-        showToast('Yeni sipariş başlatıldı')
+        showToast(t('app.toasts.newOrderStarted'))
       },
       '⚠️'
     )
@@ -452,17 +491,17 @@ function handleNewOrder() {
   
   // Reset order form
   resetOrder()
-  showToast('Yeni sipariş başlatıldı')
+  showToast(t('app.toasts.newOrderStarted'))
 }
 
 function handleClearAll() {
   if (products.value.length === 0) return
   modals.value.showConfirm(
-    'Listeyi Temizle',
-    'Tüm ürünleri listeden silmek istediğinize emin misiniz?',
+    t('app.confirms.clearListTitle'),
+    t('app.confirms.clearListMessage'),
     () => {
       clearProducts()
-      showToast('Liste temizlendi')
+      showToast(t('app.toasts.listCleared'))
     },
     '🗑️'
   )
@@ -486,14 +525,15 @@ const advancedResults = ref(null)
 // Export functions
 function exportTxt() {
   if (products.value.length === 0) {
-    showToast('Liste boş', 'error')
+    showToast(t('app.toasts.listEmpty'), 'error')
     return
   }
 
   // WhatsApp uyumlu format
   let content = `📋 *SİPARİŞ: ${orderTitle.value || 'İsimsiz'}*\n`
   content += `👤 *Müşteri:* ${customerName.value || '-'}\n`
-  content += `📅 *Tarih:* ${new Date().toLocaleDateString('tr-TR')}\n`
+  const loc = locale.value || navigator.language || 'en-US'
+  content += `📅 *Tarih:* ${new Date().toLocaleDateString(loc)}\n`
   content += `\n${'─'.repeat(35)}\n\n`
 
   products.value.forEach((p, i) => {
@@ -502,11 +542,11 @@ function exportTxt() {
     content += `   🔢 OEM: ${p.oem_number}\n`
     content += `   📦 Adet: ${p.quantity}\n`
     content += `   ${durum}\n`
-    content += `   💰 *₺${formatPrice(p.total_price)}*\n\n`
+    content += `   💰 *${currency.value}${formatPrice(p.total_price)}*\n\n`
   })
 
   content += `${'─'.repeat(35)}\n`
-  content += `\n💵 *GENEL TOPLAM: ₺${formatPrice(grandTotal.value)}*\n`
+  content += `\n💵 *GENEL TOPLAM: ${currency.value}${formatPrice(grandTotal.value)}*\n`
 
   const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
   const url = URL.createObjectURL(blob)
@@ -515,19 +555,19 @@ function exportTxt() {
   a.download = `siparis_${orderTitle.value || 'isimsiz'}_${Date.now()}.txt`
   a.click()
   URL.revokeObjectURL(url)
-  showToast('TXT dosyası indirildi')
+  showToast(t('export.txtDownloaded'))
 }
 
 function exportTxtWhatsApp() {
   if (products.value.length === 0) {
-    showToast('Liste boş', 'error')
+    showToast(t('app.toasts.listEmpty'), 'error')
     return
   }
 
   // WhatsApp uyumlu format - Türkçe karakterli
   let content = `*SİPARİŞ: ${orderTitle.value || 'İsimsiz'}*\n`
   content += `*Müşteri:* ${customerName.value || '-'}\n`
-  content += `*Tarih:* ${new Date().toLocaleDateString('tr-TR')}\n`
+  content += `*Tarih:* ${new Date().toLocaleDateString(locale.value || navigator.language || 'en-US')}\n`
   content += `\n${'─'.repeat(30)}\n\n`
 
   products.value.forEach((p, i) => {
@@ -536,15 +576,15 @@ function exportTxtWhatsApp() {
     content += `   OEM: ${p.oem_number}\n`
     content += `   Adet: ${p.quantity}\n`
     content += `   ${durum}\n`
-    content += `   *${formatPrice(p.total_price)} TL*\n\n`
+    content += `   *${currency.value}${formatPrice(p.total_price)}*\n\n`
   })
 
   content += `${'─'.repeat(30)}\n`
-  content += `\n*GENEL TOPLAM: ${formatPrice(grandTotal.value)} TL*\n`
+  content += `\n*GENEL TOPLAM: ${currency.value}${formatPrice(grandTotal.value)}*\n`
 
   // Telefon numarasını formatla
   if (!customerPhone.value) {
-    showToast('Müşteri telefonu bulunamadı', 'error')
+    showToast(t('app.toasts.customerPhoneNotFound'), 'error')
     return
   }
   
@@ -553,12 +593,12 @@ function exportTxtWhatsApp() {
   
   // WhatsApp Web linkini aç - mesajı taslak olarak hazırlar
   window.open(`https://wa.me/${phone}?text=${encodedText}`, '_blank')
-  showToast('WhatsApp açılıyor...')
+  showToast(t('export.whatsappOpening'))
 }
 
 function exportPng() {
   if (products.value.length === 0) {
-    showToast('Liste boş', 'error')
+    showToast(t('app.toasts.listEmpty'), 'error')
     return
   }
 
@@ -624,7 +664,7 @@ function exportPng() {
     ctx.textAlign = 'right'
     ctx.font = 'bold 18px Segoe UI, sans-serif'
     ctx.fillStyle = '#10b981'
-    ctx.fillText(`₺${formatPrice(p.total_price)}`, width - padding, y)
+    ctx.fillText(`${currency.value}${formatPrice(p.total_price)}`, width - padding, y)
     ctx.textAlign = 'left'
     
     y += lineHeight
@@ -642,7 +682,7 @@ function exportPng() {
   
   ctx.textAlign = 'right'
   ctx.fillStyle = '#0ea5e9'
-  ctx.fillText(`₺${formatPrice(grandTotal.value)}`, width - padding, y)
+  ctx.fillText(`${currency.value}${formatPrice(grandTotal.value)}`, width - padding, y)
   
   // PNG olarak indir
   canvas.toBlob((blob) => {
@@ -652,18 +692,18 @@ function exportPng() {
     a.download = `fiyat_teklifi_${orderTitle.value || 'isimsiz'}_${Date.now()}.png`
     a.click()
     URL.revokeObjectURL(url)
-    showToast('PNG dosyası indirildi')
+    showToast(t('export.pngDownloaded'))
   }, 'image/png')
 }
 
 function exportPngWhatsApp() {
   if (products.value.length === 0) {
-    showToast('Liste boş', 'error')
+    showToast(t('app.toasts.listEmpty'), 'error')
     return
   }
 
   if (!customerPhone.value) {
-    showToast('Müşteri telefonu bulunamadı', 'error')
+    showToast(t('app.toasts.customerPhoneNotFound'), 'error')
     return
   }
 
@@ -729,7 +769,7 @@ function exportPngWhatsApp() {
     ctx.textAlign = 'right'
     ctx.font = 'bold 18px Segoe UI, sans-serif'
     ctx.fillStyle = '#10b981'
-    ctx.fillText(`₺${formatPrice(p.total_price)}`, width - padding, y)
+    ctx.fillText(`${currency.value}${formatPrice(p.total_price)}`, width - padding, y)
     ctx.textAlign = 'left'
     
     y += lineHeight
@@ -747,7 +787,7 @@ function exportPngWhatsApp() {
   
   ctx.textAlign = 'right'
   ctx.fillStyle = '#0ea5e9'
-  ctx.fillText(`₺${formatPrice(grandTotal.value)}`, width - padding, y)
+  ctx.fillText(`${currency.value}${formatPrice(grandTotal.value)}`, width - padding, y)
   
   // PNG'yi clipboard'a kopyala ve WhatsApp'ı aç
   canvas.toBlob(async (blob) => {
@@ -765,7 +805,7 @@ function exportPngWhatsApp() {
       const phone = customerPhone.value.replace(/\D/g, '')
       window.open(`https://wa.me/${phone}`, '_blank')
       
-      showToast('Resim panoya kopyalandı! WhatsApp\'ta Ctrl+V ile yapıştırın.', 'success')
+      showToast(t('export.imageCopied'), 'success')
     } catch (err) {
       // Clipboard API desteklenmiyorsa dosyayı indir
       const url = URL.createObjectURL(blob)
@@ -778,14 +818,15 @@ function exportPngWhatsApp() {
       const phone = customerPhone.value.replace(/\D/g, '')
       setTimeout(() => {
         window.open(`https://wa.me/${phone}`, '_blank')
-        showToast('PNG indirildi. WhatsApp\'ta manuel paylaşabilirsiniz.', 'success')
+        showToast(t('export.pngDownloadedManual'), 'success')
       }, 500)
     }
   }, 'image/png')
 }
 
 function formatPrice(n) {
-  return (n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const loc = locale.value || navigator.language || 'en-US'
+  return (n || 0).toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 // Stock Handlers
@@ -832,14 +873,14 @@ function handleEditProduct(product) {
 
 function handleDeleteStockProduct(product) {
   modals.value.showConfirm(
-    'Ürün Silme',
-    `"${product.name}" ürününü silmek istediğinize emin misiniz?`,
+    t('app.confirms.deleteStockProduct'),
+    t('app.confirms.deleteStockProductMessage', { name: product.name }),
     async () => {
       const result = await deleteStockProduct(product.id)
       if (result.error) {
         showToast(result.error, 'error')
       } else {
-        showToast('Ürün silindi')
+        showToast(t('app.toasts.productDeleted'))
       }
     },
     '🗑️'
@@ -902,14 +943,67 @@ function handleProductFormSuccess(message) {
   loadStockProducts()
 }
 
+// Check for updates on startup (if enabled)
+async function checkForUpdatesOnStartup() {
+  try {
+    // Wait for settings to load
+    const settings = JSON.parse(localStorage.getItem('appSettings') || '{}')
+    if (settings.autoUpdateCheck === false) {
+      console.log('[App] Auto update check disabled')
+      return
+    }
+    
+    // Check if API is available
+    if (typeof checkForUpdates === 'undefined') {
+      console.log('[App] Update API not available')
+      return
+    }
+    
+    console.log('[App] Checking for updates...')
+    const result = await checkForUpdates()
+    const updateInfo = JSON.parse(result)
+    
+    if (updateInfo.available) {
+      console.log('[App] Update available:', updateInfo.latest_version)
+      // Show toast notification
+      const { showToast } = await import('./composables/useToast.js')
+      showToast(
+        t('app.updateAvailable', { version: updateInfo.latest_version }), 
+        'info',
+        8000
+      )
+    } else if (updateInfo.error) {
+      console.warn('[App] Update check error:', updateInfo.error)
+    } else {
+      console.log('[App] Running latest version:', updateInfo.current_version)
+    }
+  } catch (e) {
+    console.warn('[App] Update check failed:', e)
+  }
+}
+
 // Init with loadout overlay
 onMounted(async () => {
   initialLoading.value = true
   try {
+    // Load developer mode setting
+    if (typeof getDeveloperMode !== 'undefined') {
+      try {
+        const result = await getDeveloperMode()
+        const parsed = JSON.parse(result)
+        developerMode.value = parsed.enabled || false
+      } catch (e) {
+        console.warn('[App] Failed to load developer mode:', e)
+      }
+    }
+    
     await Promise.all([
       loadData(),
       loadStockProducts()
     ])
+    
+    // Check for updates after data loads (non-blocking)
+    checkForUpdatesOnStartup()
   } catch (e) {
     // Log but continue to hide overlay so UI is usable
     console.error('Initial load error:', e)
@@ -970,5 +1064,18 @@ onMounted(async () => {
 
 .tab-btn.active svg {
   opacity: 1;
+}
+
+/* Developer tab special styling */
+.tab-btn.developer-tab {
+  color: #e94560;
+}
+
+.tab-btn.developer-tab:hover {
+  background: rgba(233, 69, 96, 0.1);
+}
+
+.tab-btn.developer-tab.active {
+  background: linear-gradient(135deg, #e94560, #c23a51);
 }
 </style>

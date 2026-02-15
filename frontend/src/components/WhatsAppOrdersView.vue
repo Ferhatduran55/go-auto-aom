@@ -9,12 +9,12 @@
             📱
           </div>
           <div>
-            <h2 class="text-lg font-bold">WhatsApp Siparişleri</h2>
-            <span class="text-xs" style="color: var(--text-muted);">{{ orders.length }} sipariş</span>
+            <h2 class="text-lg font-bold">{{ t('whatsapp.title') }}</h2>
+            <span class="text-xs" style="color: var(--text-muted);">{{ t('whatsapp.orderCount', { count: orders.length }) }}</span>
           </div>
         </div>
         <button @click="handleNewOrder" class="btn btn-primary btn-sm">
-          + Yeni
+          {{ t('whatsapp.new') }}
         </button>
       </div>
 
@@ -25,7 +25,7 @@
             v-model="searchTerm"
             @input="handleSearch"
             type="text" 
-            placeholder="Müşteri, telefon veya ürün ara..."
+            :placeholder="t('whatsapp.searchPlaceholder')"
             class="form-input w-full pl-10 text-sm"
           />
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-lg opacity-50">🔍</span>
@@ -52,7 +52,7 @@
 
         <div v-else-if="filteredOrders.length === 0" class="text-center py-12" style="color: var(--text-muted);">
           <div class="text-5xl mb-4 opacity-50">📭</div>
-          <p>Sipariş bulunamadı</p>
+          <p>{{ t('whatsapp.noOrders') }}</p>
         </div>
 
         <div 
@@ -72,7 +72,7 @@
 
           <!-- Müşteri Bilgisi -->
           <div class="font-semibold mb-1">
-            {{ order.customer_name || 'İsimsiz Müşteri' }}
+            {{ order.customer_name || t('whatsapp.anonymousCustomer') }}
           </div>
           <div v-if="order.customer_phone" class="text-sm mb-2" style="color: var(--text-muted);">
             📱 {{ order.customer_phone }}
@@ -81,7 +81,7 @@
           <!-- Özet -->
           <div class="flex justify-between items-center pt-2 border-t" style="border-color: var(--border-color);">
             <span class="text-xs" style="color: var(--text-muted);">
-              📦 {{ order.items?.length || 0 }} kalem
+              📦 {{ t('whatsapp.itemCount', { count: order.items?.length || 0 }) }}
             </span>
             <span class="font-bold text-success">
               {{ formatCurrency(order.grand_total) }}
@@ -96,10 +96,10 @@
       <!-- Sipariş Seçilmemiş -->
       <div v-if="!currentOrder" class="flex flex-col items-center justify-center h-full" style="color: var(--text-muted);">
         <div class="text-6xl mb-4 opacity-30">📋</div>
-        <p class="text-lg mb-2">Sipariş Seçin</p>
-        <p class="text-sm">veya</p>
+        <p class="text-lg mb-2">{{ t('whatsapp.selectOrder') }}</p>
+        <p class="text-sm">{{ t('whatsapp.or') }}</p>
         <button @click="handleNewOrder" class="btn btn-primary mt-4">
-          + Yeni Sipariş Oluştur
+          {{ t('whatsapp.createOrder') }}
         </button>
       </div>
 
@@ -113,7 +113,7 @@
             </div>
             <div>
               <h3 class="text-lg font-bold">
-                {{ currentOrder.id ? 'Sipariş Detayı' : 'Yeni Sipariş' }}
+                {{ currentOrder.id ? t('whatsapp.orderDetail') : t('whatsapp.newOrder') }}
               </h3>
               <span v-if="currentOrder.id" class="text-xs" style="color: var(--text-muted);">
                 ID: {{ currentOrder.id.substring(0, 8) }}...
@@ -122,10 +122,10 @@
           </div>
           <div class="flex gap-2">
             <button v-if="currentOrder.id" @click="showStatusModal = true" class="btn btn-secondary btn-sm">
-              📍 Durum Ekle
+              📍 {{ t('whatsapp.addStatus') }}
             </button>
             <button @click="handleSave" :disabled="!hasUnsavedChanges && currentOrder.id" class="btn btn-primary btn-sm">
-              💾 Kaydet
+              💾 {{ t('whatsapp.save') }}
             </button>
           </div>
         </div>
@@ -134,10 +134,10 @@
         <div class="content-body">
           <!-- Müşteri Bilgileri -->
           <div class="form-section">
-            <h4 class="section-title">👤 Müşteri Bilgileri</h4>
+            <h4 class="section-title">👤 {{ t('whatsapp.customerInfo') }}</h4>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Tarih *</label>
+                <label class="form-label">{{ t('whatsapp.dateRequired') }}</label>
                 <input 
                   v-model="currentOrder.date" 
                   @change="markAsModified"
@@ -146,22 +146,22 @@
                 />
               </div>
               <div class="form-group">
-                <label class="form-label">Müşteri Adı</label>
+                <label class="form-label">{{ t('whatsapp.customerName') }}</label>
                 <input 
                   v-model="currentOrder.customer_name" 
                   @input="markAsModified"
                   type="text" 
-                  placeholder="Müşteri adı (opsiyonel)"
+                  :placeholder="t('whatsapp.customerNamePlaceholder')"
                   class="form-input"
                 />
               </div>
               <div class="form-group">
-                <label class="form-label">Telefon</label>
+                <label class="form-label">{{ t('whatsapp.phone') }}</label>
                 <input 
                   v-model="currentOrder.customer_phone" 
                   @input="markAsModified"
                   type="text" 
-                  placeholder="0532 XXX XX XX (opsiyonel)"
+                  :placeholder="t('whatsapp.phonePlaceholder')"
                   class="form-input"
                 />
               </div>
@@ -170,10 +170,10 @@
 
           <!-- Ödeme Bilgileri -->
           <div class="form-section">
-            <h4 class="section-title">💳 Ödeme Bilgileri</h4>
+            <h4 class="section-title">💳 {{ t('whatsapp.paymentInfo') }}</h4>
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Ödeme Yöntemi</label>
+                <label class="form-label">{{ t('whatsapp.paymentMethod') }}</label>
                 <div class="payment-options">
                   <label 
                     v-for="(info, key) in PAYMENT_METHODS" 
@@ -193,12 +193,12 @@
                 </div>
               </div>
               <div v-if="currentOrder.payment_method === 'kredi_karti'" class="form-group">
-                <label class="form-label">Ödeme Notu (Taksit bilgisi vb.)</label>
+                <label class="form-label">{{ t('whatsapp.paymentNote') }}</label>
                 <input 
                   v-model="currentOrder.payment_note" 
                   @input="markAsModified"
                   type="text" 
-                  placeholder="örn: 6 taksit Garanti"
+                  :placeholder="t('whatsapp.paymentNotePlaceholder')"
                   class="form-input"
                 />
               </div>
@@ -208,27 +208,27 @@
           <!-- Sipariş Kalemleri -->
           <div class="form-section">
             <div class="flex items-center justify-between mb-4">
-              <h4 class="section-title mb-0">📦 Sipariş Kalemleri</h4>
+              <h4 class="section-title mb-0">📦 {{ t('whatsapp.orderItems') }}</h4>
               <button @click="addItem" class="btn btn-secondary btn-sm">
-                + Kalem Ekle
+                {{ t('whatsapp.addItem') }}
               </button>
             </div>
 
             <div v-if="currentOrder.items.length === 0" class="text-center py-8 border-2 border-dashed rounded-xl" style="border-color: var(--border-color); color: var(--text-muted);">
-              <p>Henüz sipariş kalemi eklenmedi</p>
+              <p>{{ t('whatsapp.noItems') }}</p>
               <button @click="addItem" class="btn btn-primary btn-sm mt-3">
-                + İlk Kalemi Ekle
+                {{ t('whatsapp.addFirstItem') }}
               </button>
             </div>
 
             <table v-else class="items-table">
               <thead>
                 <tr>
-                  <th class="w-2/5">Ürün Adı</th>
-                  <th class="w-1/6">Tür</th>
-                  <th class="w-1/8 text-center">Adet</th>
-                  <th class="w-1/6 text-right">Fiyat</th>
-                  <th class="w-1/6 text-right">Toplam</th>
+                  <th class="w-2/5">{{ t('whatsapp.productName') }}</th>
+                  <th class="w-1/6">{{ t('whatsapp.type') }}</th>
+                  <th class="w-1/8 text-center">{{ t('whatsapp.quantity') }}</th>
+                  <th class="w-1/6 text-right">{{ t('whatsapp.price') }}</th>
+                  <th class="w-1/6 text-right">{{ t('whatsapp.total') }}</th>
                   <th class="w-10"></th>
                 </tr>
               </thead>
@@ -239,7 +239,7 @@
                       :value="item.product_name"
                       @input="updateItem(index, 'product_name', $event.target.value)"
                       type="text" 
-                      placeholder="örn: Tofaş ön tampon"
+                      :placeholder="t('whatsapp.productNamePlaceholder')"
                       class="form-input text-sm"
                     />
                   </td>
@@ -249,8 +249,8 @@
                       @change="updateItem(index, 'type', $event.target.value)"
                       class="form-input text-sm"
                     >
-                      <option value="cikma">🔵 Çıkma</option>
-                      <option value="sifir">🟢 Sıfır</option>
+                      <option value="cikma">🔵 {{ t('whatsapp.partTypes.cikma') }}</option>
+                      <option value="sifir">🟢 {{ t('whatsapp.partTypes.sifir') }}</option>
                     </select>
                   </td>
                   <td>
@@ -285,7 +285,7 @@
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="4" class="text-right font-bold">GENEL TOPLAM:</td>
+                  <td colspan="4" class="text-right font-bold">{{ t('whatsapp.grandTotal') }}</td>
                   <td class="text-right font-bold text-lg text-success">
                     {{ formatCurrency(currentOrder.grand_total) }}
                   </td>
@@ -297,7 +297,7 @@
 
           <!-- Durum Geçmişi (sadece kayıtlı siparişler için) -->
           <div v-if="currentOrder.id && currentOrder.status_history?.length > 0" class="form-section">
-            <h4 class="section-title">📍 Durum Geçmişi</h4>
+            <h4 class="section-title">📍 {{ t('whatsapp.statusHistory') }}</h4>
             <div class="status-timeline">
               <div 
                 v-for="status in [...currentOrder.status_history].reverse()" 
@@ -326,13 +326,13 @@
           <div v-if="currentOrder.id" class="form-section">
             <div class="flex gap-3">
               <button @click="handleSave" :disabled="!hasUnsavedChanges" class="btn btn-primary">
-                💾 Kaydet
+                💾 {{ t('whatsapp.save') }}
               </button>
               <button @click="handleDelete" class="btn btn-danger">
-                🗑️ Sil
+                🗑️ {{ t('whatsapp.deleteOrder') }}
               </button>
               <button @click="clearSelection" class="btn btn-secondary">
-                ✕ Kapat
+                ✕ {{ t('whatsapp.close') }}
               </button>
             </div>
           </div>
@@ -354,6 +354,11 @@
 import { ref, onMounted } from 'vue'
 import { useWhatsAppOrders, ORDER_STATUSES, PAYMENT_METHODS } from '@/composables/useWhatsAppOrders'
 import WhatsAppOrderStatusModal from './WhatsAppOrderStatusModal.vue'
+import { useI18n } from '@/i18n'
+import { useToast } from '@/composables/useToast'
+
+const { t } = useI18n()
+const { showToast } = useToast()
 
 const {
   orders,
@@ -383,11 +388,11 @@ const {
 const showStatusModal = ref(false)
 
 const statusFilters = {
-  all: { label: 'Tümü' },
-  tedarik_surecinde: { label: '🔵 Tedarik' },
-  hazirlaniyor: { label: '🟡 Hazırlanıyor' },
-  tamamlandi: { label: '✅ Tamamlandı' },
-  iade: { label: '🔴 İade' }
+  all: { label: t('whatsapp.filters.all') },
+  tedarik_surecinde: { label: t('whatsapp.filters.tedarik') },
+  hazirlaniyor: { label: t('whatsapp.filters.hazirlaniyor') },
+  tamamlandi: { label: t('whatsapp.filters.tamamlandi') },
+  iade: { label: t('whatsapp.filters.iade') }
 }
 
 onMounted(async () => {
@@ -413,20 +418,19 @@ function handleSelectOrder(order) {
 async function handleSave() {
   const result = await saveOrder()
   if (result.success) {
-    // Toast göster
-    console.log('Sipariş kaydedildi')
+    showToast(t('whatsapp.orderSaved'), 'success')
   } else if (result.error) {
-    console.error('Kayıt hatası:', result.error)
+    showToast(t('whatsapp.saveError', { error: result.error }), 'error')
   }
 }
 
 async function handleDelete() {
   if (!currentOrder.value?.id) return
   
-  if (confirm('Bu siparişi silmek istediğinizden emin misiniz?')) {
+  if (confirm(t('whatsapp.deleteConfirm'))) {
     const result = await deleteOrder(currentOrder.value.id)
     if (result.success) {
-      console.log('Sipariş silindi')
+      showToast(t('whatsapp.orderDeleted'), 'success')
     }
   }
 }

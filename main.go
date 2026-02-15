@@ -6,7 +6,11 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"reflect"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -31,10 +35,12 @@ import (
 // =============================================================================
 
 // Application metadata - Keep in sync with versioninfo.json
-const (
-	AppName    = "AutoManagement"
-	AppTitle   = "AutoManagement - Oto Yönetim Sistemi"
-	AppVersion = "26.1.2"
+var (
+	AppName        = "AutoManagement"
+	AppTitle       = "AutoManagement - Oto Yönetim Sistemi"
+	AppVersion     = "26.2.1"
+	BleveVersion   = ""
+	WebViewVersion = ""
 )
 
 // Window configuration
@@ -54,19 +60,24 @@ func main() {
 	var err error
 	store, err = storage.NewBleveStore()
 	if err != nil {
+		LogError("System", fmt.Sprintf("Database error: %v", err))
 		fmt.Printf("Database error: %v\n", err)
 		return
 	}
 	defer store.Close()
+	LogSystemWithCode(fmt.Sprintf("%s v%s starting...", AppName, AppVersion), "app.starting", map[string]interface{}{"version": AppVersion, "app": AppName})
+	LogSystemWithCode("Database connected", "db.connected", nil)
 
 	// Find available port
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
+		LogError("System", fmt.Sprintf("Port not found: %v", err))
 		fmt.Printf("Failed to find available port: %v\n", err)
 		return
 	}
 	port := listener.Addr().(*net.TCPAddr).Port
 	listener.Close()
+	LogSystemWithCode(fmt.Sprintf("HTTP server starting on port %d", port), "http.starting", map[string]interface{}{"port": port})
 
 	// Start HTTP server
 	go startServer(port)
@@ -74,6 +85,9 @@ func main() {
 
 	// Check if developer mode is enabled from settings
 	debugMode := storage.IsDeveloperMode()
+	if debugMode {
+		LogSystemWithCode("Developer mode enabled", "dev.mode.enabled", nil)
+	}
 
 	// Create WebView2 window
 	w := webview2.NewWithOptions(webview2.WebViewOptions{
@@ -98,6 +112,14 @@ func main() {
 		exec.Command("cmd", "/c", "start", "https://go.microsoft.com/fwlink/p/?LinkId=2124703").Start()
 		return
 	}
+
+	// Try to detect the WebView2 runtime/browser version at runtime.
+	// If detection succeeds, override the build-embedded WebViewVersion value.
+	if detected := detectWebViewRuntimeVersion(w); detected != "" {
+		WebViewVersion = detected
+		LogSystem(fmt.Sprintf("Detected WebView2 runtime version: %s", WebViewVersion))
+	}
+
 	defer w.Destroy()
 
 	// Bind Go functions to JavaScript
@@ -108,6 +130,9 @@ func main() {
 	bindSettingsFunctions(w)
 	bindNoteFunctions(w)
 	bindWhatsAppOrderFunctions(w)
+	bindUpdateFunctions(w)
+	bindLogFunctions(w)
+	bindSystemFunctions(w)
 
 	w.Navigate(fmt.Sprintf("http://127.0.0.1:%d/", port))
 	w.Run()
@@ -125,6 +150,58 @@ func bindOrderFunctions(w webview2.WebView) {
 	w.Bind("deleteOrderFromBleve", deleteOrderFromBleve)
 	w.Bind("searchOrders", searchOrders)
 	w.Bind("searchOrdersAdvanced", searchOrdersAdvanced)
+}
+
+// detectWebViewRuntimeVersion attempts to discover the installed WebView2 runtime/browser version
+// by trying a few known methods on the WebView object via reflection. This is best-effort and will not
+// panic on failures; if nothing is found, it returns an empty string.
+func detectWebViewRuntimeVersion(w webview2.WebView) string {
+	defer func() {
+		if r := recover(); r != nil {
+			// ignore panics from reflection/calls
+		}
+	}()
+
+	v := reflect.ValueOf(w)
+	if !v.IsValid() {
+		return ""
+	}
+
+	// Common method names to try on the WebView itself
+	methodNames := []string{"GetBrowserVersionString", "BrowserVersionString", "GetVersion"}
+	for _, name := range methodNames {
+		m := v.MethodByName(name)
+		if m.IsValid() && m.Type().NumIn() == 0 {
+			res := m.Call(nil)
+			if len(res) >= 1 {
+				if s, ok := res[0].Interface().(string); ok && s != "" {
+					return s
+				}
+			}
+		}
+	}
+
+	// Try to get a CoreWebView2-like object and call methods on it
+	coreM := v.MethodByName("CoreWebView2")
+	if coreM.IsValid() && coreM.Type().NumIn() == 0 {
+		r := coreM.Call(nil)
+		if len(r) >= 1 {
+			core := r[0]
+			for _, name := range []string{"GetBrowserVersionString", "BrowserVersionString", "GetVersion"} {
+				mc := core.MethodByName(name)
+				if mc.IsValid() && mc.Type().NumIn() == 0 {
+					res := mc.Call(nil)
+					if len(res) >= 1 {
+						if s, ok := res[0].Interface().(string); ok && s != "" {
+							return s
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return ""
 }
 
 // bindCustomerFunctions binds customer-related functions to WebView
@@ -186,6 +263,180 @@ func bindWhatsAppOrderFunctions(w webview2.WebView) {
 	w.Bind("searchWhatsAppOrders", searchWhatsAppOrders)
 	w.Bind("addWhatsAppOrderStatus", addWhatsAppOrderStatus)
 	w.Bind("filterWhatsAppOrdersByStatus", filterWhatsAppOrdersByStatus)
+}
+
+// bindUpdateFunctions binds update-related functions to WebView
+func bindUpdateFunctions(w webview2.WebView) {
+	w.Bind("checkForUpdates", checkForUpdates)
+	w.Bind("getAppVersion", getAppVersion)
+}
+
+// bindLogFunctions binds log-related functions to WebView
+func bindLogFunctions(w webview2.WebView) {
+	w.Bind("getBackendLogs", getLogsJSON)
+	w.Bind("getBackendLogsAfterId", getLogsAfterIdJSON)
+	w.Bind("clearBackendLogs", clearLogs)
+	w.Bind("setLogBufferSize", setLogBufferSizeJSON)
+	w.Bind("getLogBufferSize", getLogBufferSize)
+}
+
+// Uygulama başlangıç zamanı
+var appStartTime = time.Now()
+
+// bindSystemFunctions binds system-related functions to WebView
+func bindSystemFunctions(w webview2.WebView) {
+	w.Bind("getSystemInfo", getSystemInfo)
+	w.Bind("exportAllData", exportAllData)
+	w.Bind("copySystemInfo", copySystemInfo)
+	w.Bind("clearCache", clearCache)
+}
+
+// getSystemInfo returns comprehensive system information
+func getSystemInfo() string {
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+
+	// CPU model bilgisini al
+	cpuModel := getCPUModel()
+
+	info := map[string]interface{}{
+		"app_name":        AppName,
+		"app_version":     AppVersion,
+		"go_version":      strings.TrimPrefix(runtime.Version(), "go"),
+		"bleve_version":   BleveVersion,
+		"webview_version": WebViewVersion,
+		"os":              runtime.GOOS,
+		"arch":            runtime.GOARCH,
+		"cpu_model":       cpuModel,
+		"uptime":          formatDuration(time.Since(appStartTime)),
+		"uptime_seconds":  int64(time.Since(appStartTime).Seconds()),
+
+	}
+
+	data, _ := json.Marshal(info)
+	return string(data)
+}
+
+// formatDuration formats duration as HH:MM:SS (zero-padded)
+func formatDuration(d time.Duration) string {
+	t := int64(d.Seconds())
+	h := t / 3600
+	m := (t % 3600) / 60
+	s := t % 60
+	return fmt.Sprintf("%02d:%02d:%02d", h, m, s)
+}
+
+// getCPUModel Windows'ta CPU model adını alır
+func getCPUModel() string {
+	// 1. Try PowerShell (most reliable on modern Windows)
+	// -ExecutionPolicy Bypass is used to avoid script restriction issues
+	cmd := exec.Command("powershell", "-ExecutionPolicy", "Bypass", "-NoProfile", "-Command", "Get-CimInstance -ClassName Win32_Processor | Select-Object -ExpandProperty Name")
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	output, err := cmd.Output()
+	if err == nil {
+		model := strings.TrimSpace(string(output))
+		if model != "" {
+			return model
+		}
+	}
+
+	// 2. Fallback to wmic (older Windows)
+	cmd = exec.Command("wmic", "cpu", "get", "name")
+	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+	output, err = cmd.Output()
+	if err == nil {
+		lines := strings.Split(string(output), "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line != "" && line != "Name" {
+				return line
+			}
+		}
+	}
+
+	// 3. Last resort: Environment variable
+	if val := os.Getenv("PROCESSOR_IDENTIFIER"); val != "" {
+		return val
+	}
+
+	return "Bilinmiyor"
+}
+
+// exportAllData exports all data as JSON
+func exportAllData() string {
+	LogSystemWithCode("Exporting data...", "export.started", nil)
+
+	// Get all data
+	orders, _ := store.ListOrders()
+	customers, _ := store.ListCustomers()
+	products, _ := store.ListProducts()
+
+	exportData := map[string]interface{}{
+		"export_date": time.Now().Format(time.RFC3339),
+		"app_version": fmt.Sprintf("v%s", AppVersion),
+		"orders":      orders,
+		"customers":   customers,
+		"products":    products,
+	}
+
+	data, err := json.MarshalIndent(exportData, "", "  ")
+	if err != nil {
+		LogErrorWithCode("System", fmt.Sprintf("Export error: %v", err), "export.error", map[string]interface{}{"error": err.Error()})
+		return fmt.Sprintf(`{"success": false, "error": "%s"}`, err.Error())
+	}
+
+	LogSystemWithCode(fmt.Sprintf("Export completed: %d orders, %d customers, %d products", len(orders), len(customers), len(products)), "export.completed", map[string]interface{}{"orders": len(orders), "customers": len(customers), "products": len(products)})
+	return string(data)
+}
+
+// copySystemInfo returns system info in a copyable format for error reporting
+func copySystemInfo() string {
+	var mem runtime.MemStats
+	runtime.ReadMemStats(&mem)
+
+	info := fmt.Sprintf(`=== AutoManagement System Info ===
+Application: %s %s
+Go: %s
+Bleve: %s
+WebView: %s
+OS: %s/%s
+CPU: %d cores
+Goroutines: %d
+Memory (Alloc): %d MB
+Memory (Sys): %d MB
+GC Cycles: %d
+Uptime: %s
+Date: %s
+=====================================`,
+		AppName, AppVersion,
+		runtime.Version(),
+		BleveVersion,
+		WebViewVersion,
+		runtime.GOOS, runtime.GOARCH,
+		runtime.NumCPU(),
+		runtime.NumGoroutine(),
+		mem.Alloc/1024/1024,
+		mem.Sys/1024/1024,
+		mem.NumGC,
+		formatDuration(time.Since(appStartTime)),
+		time.Now().Format("2006-01-02 15:04:05"),
+	)
+
+	return info
+}
+
+// clearCache clears temporary files
+func clearCache() string {
+	LogSystemWithCode("Clearing cache...", "cache.clearing", nil)
+
+	tempDir := filepath.Join(os.TempDir(), "AutoManagement")
+	if err := os.RemoveAll(tempDir); err != nil {
+		LogErrorWithCode("System", fmt.Sprintf("Cache clear error: %v", err), "cache.clear_error", map[string]interface{}{"error": err.Error()})
+		return fmt.Sprintf(`{"success": false, "error": "%s"}`, err.Error())
+	}
+
+	LogSystemWithCode("Cache cleared", "cache.cleared", nil)
+	return `{"success": true}`
 }
 
 // =============================================================================
@@ -835,7 +1086,7 @@ func setDeveloperMode(enabled bool) string {
 	return jsonMarshal(map[string]interface{}{
 		"success":          true,
 		"restart_required": true,
-		"message":          "Geliştirici modu değiştirildi. Değişikliklerin etkili olması için uygulamayı yeniden başlatın.",
+		"message":          "Developer mode changed. Restart the application for changes to take effect.",
 	})
 }
 

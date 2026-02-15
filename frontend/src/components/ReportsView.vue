@@ -13,7 +13,7 @@
             <line x1="8" x2="8" y1="2" y2="6"></line>
             <line x1="3" x2="21" y1="10" y2="10"></line>
           </svg>
-          Günlük Rapor
+          {{ t('reports.daily') }}
         </button>
         <button 
           :class="{ active: activePeriod === 'monthly' }" 
@@ -31,7 +31,7 @@
             <path d="M12 18h.01"></path>
             <path d="M16 18h.01"></path>
           </svg>
-          Aylık Rapor
+          {{ t('reports.monthly') }}
         </button>
       </div>
       
@@ -53,7 +53,7 @@
             <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
           </svg>
           <span v-if="loading" class="loading-spinner-sm"></span>
-          Rapor Oluştur
+          {{ t('reports.generate') }}
         </button>
       </div>
     </div>
@@ -71,8 +71,8 @@
           </div>
           <div class="card-content">
             <span class="card-value">{{ report.total_in?.toFixed(1) || 0 }}</span>
-            <span class="card-label">Toplam Giriş</span>
-            <span class="card-count">{{ report.in_movement_count || 0 }} işlem</span>
+            <span class="card-label">{{ t('reports.totalEntry') }}</span>
+            <span class="card-count">{{ report.in_movement_count || 0 }} {{ t('reports.transactions') }}</span>
           </div>
         </div>
         
@@ -84,8 +84,8 @@
           </div>
           <div class="card-content">
             <span class="card-value">{{ report.total_out?.toFixed(1) || 0 }}</span>
-            <span class="card-label">Toplam Çıkış</span>
-            <span class="card-count">{{ report.out_movement_count || 0 }} işlem</span>
+            <span class="card-label">{{ t('reports.totalExit') }}</span>
+            <span class="card-count">{{ report.out_movement_count || 0 }} {{ t('reports.transactions') }}</span>
           </div>
         </div>
         
@@ -102,8 +102,8 @@
             <span class="card-value" :class="netChange >= 0 ? 'positive' : 'negative'">
               {{ netChange >= 0 ? '+' : '' }}{{ netChange.toFixed(1) }}
             </span>
-            <span class="card-label">Net Değişim</span>
-            <span class="card-count">Giriş - Çıkış</span>
+            <span class="card-label">{{ t('reports.netChange') }}</span>
+            <span class="card-count">{{ t('reports.entryMinusExit') }}</span>
           </div>
         </div>
       </div>
@@ -116,7 +116,7 @@
             <path d="M18 20V4"></path>
             <path d="M6 20v-4"></path>
           </svg>
-          En Çok Kullanılan Ürünler
+          {{ t('reports.mostUsedProducts') }}
         </h3>
         
         <div v-if="report.most_used_items?.length > 0" class="top-products">
@@ -128,11 +128,11 @@
             <div class="rank" :class="getRankClass(index)">{{ index + 1 }}</div>
             <div class="product-info">
               <span class="product-name">{{ item.product_name }}</span>
-              <span class="product-stats">{{ item.movement_count }} çıkış işlemi</span>
+              <span class="product-stats">{{ item.movement_count }} {{ t('reports.exitTransactions') }}</span>
             </div>
             <div class="product-amount">
               <span class="amount-value">{{ item.total_out?.toFixed(1) }}</span>
-              <span class="amount-label">toplam</span>
+              <span class="amount-label">{{ t('common.total') }}</span>
             </div>
             <div class="product-bar">
               <div 
@@ -143,7 +143,7 @@
           </div>
         </div>
         <div v-else class="empty-state">
-          <p>Bu dönemde çıkış hareketi bulunmuyor</p>
+          <p>{{ t('reports.noExitMovements') }}</p>
         </div>
       </div>
       
@@ -154,18 +154,18 @@
             <path d="M12 20h9"></path>
             <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
           </svg>
-          Hareket Detayları ({{ report.movements?.length || 0 }} hareket)
+          {{ t('reports.movementDetails', { count: report.movements?.length || 0 }) }}
         </h3>
         
         <div v-if="report.movements?.length > 0" class="movements-table-container">
           <table class="movements-table">
             <thead>
               <tr>
-                <th>Tarih/Saat</th>
-                <th>Ürün</th>
-                <th class="text-center">Tip</th>
-                <th class="text-right">Miktar</th>
-                <th>Açıklama</th>
+                <th>{{ t('reports.dateTime') }}</th>
+                <th>{{ t('common.product') }}</th>
+                <th class="text-center">{{ t('reports.type') }}</th>
+                <th class="text-right">{{ t('common.quantity') }}</th>
+                <th>{{ t('common.description') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -180,7 +180,7 @@
                 <td>{{ movement.product_name }}</td>
                 <td class="text-center">
                   <span :class="['type-badge', movement.movement_type]">
-                    {{ movement.movement_type === 'in' ? 'Giriş' : 'Çıkış' }}
+                    {{ movement.movement_type === 'in' ? t('reports.entry') : t('reports.exit') }}
                   </span>
                 </td>
                 <td class="text-right amount-cell">
@@ -193,11 +193,11 @@
             </tbody>
           </table>
           <div v-if="report.movements.length > 20" class="more-info">
-            ... ve {{ report.movements.length - 20 }} hareket daha
+            ... {{ t('reports.andMoreMovements', { count: report.movements.length - 20 }) }}
           </div>
         </div>
         <div v-else class="empty-state">
-          <p>Bu dönemde hareket bulunmuyor</p>
+          <p>{{ t('reports.noMovements') }}</p>
         </div>
       </div>
     </div>
@@ -211,8 +211,8 @@
         <line x1="16" x2="8" y1="17" y2="17"></line>
         <line x1="10" x2="8" y1="9" y2="9"></line>
       </svg>
-      <h3>Stok Raporu Oluşturun</h3>
-      <p>Tarih seçerek günlük veya aylık stok hareketlerini görüntüleyin</p>
+      <h3>{{ t('reports.createStockReport') }}</h3>
+      <p>{{ t('reports.createStockReportDesc') }}</p>
     </div>
   </div>
 </template>
@@ -220,7 +220,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useStock } from '../composables/useStock'
+import { useI18n } from '@/i18n'
 
+const { t, locale } = useI18n()
 const { stockReport, generateReport, loading } = useStock()
 
 const activePeriod = ref('daily')
@@ -256,13 +258,18 @@ const getRankClass = (index) => {
 // Format date time
 const formatDateTime = (dateStr) => {
   const date = new Date(dateStr)
-  return date.toLocaleString('tr-TR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  const loc = locale.value || navigator.language || 'en-US'
+  try {
+    return date.toLocaleString(loc, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return date.toLocaleString()
+  }
 }
 
 // Generate report

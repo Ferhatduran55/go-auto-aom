@@ -11,17 +11,17 @@
     }"
   >
     <div class="flex flex-col gap-1.5">
-      <label class="text-xs font-bold uppercase tracking-wide" style="color: var(--text-muted);">📋 Sipariş Başlığı</label>
+      <label class="text-xs font-bold uppercase tracking-wide" style="color: var(--text-muted);">📋 {{ t('orders.orderTitle') }}</label>
       <input 
         type="text" 
         v-model="orderTitle" 
         class="form-input" 
-        placeholder="Örn: Aralık Ayı İhale 1"
+        :placeholder="t('orders.orderTitlePlaceholder')"
       >
     </div>
     
     <div class="flex flex-col gap-1.5 relative">
-      <label class="text-xs font-bold uppercase tracking-wide" style="color: var(--text-muted);">👤 Müşteri / Tedarikçi</label>
+      <label class="text-xs font-bold uppercase tracking-wide" style="color: var(--text-muted);">👤 {{ t('orders.customer') }}</label>
       <div class="flex gap-2">
         <input 
           type="text" 
@@ -29,7 +29,7 @@
           @input="onCustomerInput"
           @focus="showCustomerDropdown = true"
           class="form-input flex-1" 
-          placeholder="Ad ile ara..."
+          :placeholder="t('orders.customerNamePlaceholder')"
           autocomplete="off"
         >
         <!-- Müşteri Filtre Toggle Butonu -->
@@ -38,7 +38,7 @@
           @click="toggleCustomerFilter"
           :class="['px-3 rounded-xl border-2 transition-colors', customerFilterActive ? 'bg-accent border-accent text-white' : 'hover:bg-accent hover:text-white hover:border-accent']"
           :style="!customerFilterActive ? { borderColor: 'var(--border-color)', color: 'var(--text-muted)' } : {}"
-          :title="customerFilterActive ? 'Müşteri filtresini kapat' : 'Bu müşterinin siparişlerini göster'"
+          :title="customerFilterActive ? t('orders.clearCustomerFilter') : t('orders.filterByCustomer')"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
@@ -59,7 +59,7 @@
           </div>
           <div class="text-sm" style="color: var(--text-muted);">
             <span v-if="c.phone">📞 {{ c.phone }} • </span>
-            {{ c.order_count || 0 }} sipariş • ₺{{ formatPrice(c.total_amount || 0) }}
+            {{ c.order_count || 0 }} {{ t('common.order') }} • {{ currency }}{{ formatPrice(c.total_amount || 0) }}
           </div>
         </div>
         <!-- Yeni müşteri oluştur seçeneği -->
@@ -70,13 +70,13 @@
           :class="{ 'border-t-2': filteredCustomers.length > 0 }"
           style="border-color: var(--border-color); color: var(--text-primary);"
         >
-          ➕ "{{ customerName }}" adında yeni müşteri oluştur
+          ➕ {{ t('orders.createCustomer', { name: customerName }) }}
         </div>
       </div>
     </div>
     
     <div class="flex flex-col gap-1.5 relative">
-      <label class="text-xs font-bold uppercase tracking-wide" style="color: var(--text-muted);">📞 Telefon</label>
+      <label class="text-xs font-bold uppercase tracking-wide" style="color: var(--text-muted);">📞 {{ t('orders.customerPhone') }}</label>
       <div class="flex items-stretch gap-2">
         <div class="flex items-stretch rounded-xl overflow-hidden border-2 flex-1" style="border-color: var(--border-color);">
           <input 
@@ -102,7 +102,7 @@
           @click="openWhatsApp"
           class="px-3 rounded-xl border-2 hover:bg-green-500 hover:text-white hover:border-green-500 transition-colors"
           style="border-color: var(--border-color); color: var(--text-muted);"
-          title="WhatsApp'ta aç"
+          :title="t('common.openInWhatsApp')"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
@@ -113,7 +113,7 @@
           @click="copyPhone"
           class="px-3 rounded-xl border-2 hover:bg-accent hover:text-white hover:border-accent transition-colors"
           style="border-color: var(--border-color); color: var(--text-muted);"
-          title="Numarayı kopyala"
+          :title="t('common.copyNumber')"
         >
           📋
         </button>
@@ -132,14 +132,14 @@
             <span class="text-xs px-2 py-0.5 rounded bg-accent/20 text-accent font-mono">#{{ c.id?.substring(0, 6) }}</span>
           </div>
           <div class="text-sm" style="color: var(--text-muted);">
-            📞 {{ c.phone }} • {{ c.order_count || 0 }} sipariş
+            📞 {{ c.phone }} • {{ c.order_count || 0 }} {{ t('common.order') }}
           </div>
         </div>
       </div>
     </div>
     
     <div class="flex flex-col gap-1.5">
-      <label class="text-xs font-bold uppercase tracking-wide" style="color: var(--text-muted);">📅 Tarih</label>
+      <label class="text-xs font-bold uppercase tracking-wide" style="color: var(--text-muted);">📅 {{ t('orders.orderDate') }}</label>
       <input 
         type="text" 
         :value="currentDate" 
@@ -153,7 +153,7 @@
         v-if="isEditing" 
         class="bg-accent text-white px-5 py-3 rounded-lg font-bold text-sm inline-block"
       >
-        ✏️ Düzenleniyor
+        ✏️ {{ t('orders.editing') }}
       </span>
     </div>
   </div>
@@ -163,6 +163,12 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useOrder } from '@/composables/useOrder'
 import { useToast } from '@/composables/useToast'
+import { useI18n } from '@/i18n'
+import { useSettings } from '@/composables/useSettings'
+
+const { t, locale } = useI18n()
+const { settings } = useSettings()
+const currency = computed(() => settings?.value?.currency || '₺')
 
 const { orderTitle, customerName, customerPhone, currentCustomerId, allCustomers, isEditing, products, customerFilterActive } = useOrder()
 const { showToast } = useToast()
@@ -176,9 +182,9 @@ const isActive = computed(() => {
 function toggleCustomerFilter() {
   customerFilterActive.value = !customerFilterActive.value
   if (customerFilterActive.value) {
-    showToast(`📋 ${customerName.value} için siparişler filtrelendi`, 'success')
+    showToast(`📋 ${customerName.value} ${t('orders.customerFiltered')}`, 'success')
   } else {
-    showToast('Filtre kaldırıldı', 'info')
+    showToast(t('orders.filterRemoved'), 'info')
   }
 }
 
@@ -212,7 +218,8 @@ watch(customerPhone, (newVal) => {
 }, { immediate: true })
 
 const currentDate = computed(() => {
-  return new Date().toLocaleDateString('tr-TR', { 
+  const loc = locale.value || navigator.language || 'en-US'
+  return new Date().toLocaleDateString(loc, { 
     day: 'numeric', 
     month: 'long', 
     year: 'numeric' 
@@ -309,9 +316,9 @@ function createNewCustomer() {
 function copyPhone() {
   const fullPhone = countryCode.value + ' ' + phoneInput.value
   navigator.clipboard.writeText(fullPhone).then(() => {
-    showToast('📋 Numara kopyalandı: ' + fullPhone, 'success')
+    showToast(t('app.toasts.phoneCopied', { phone: fullPhone }), 'success')
   }).catch(err => {
-    showToast('Kopyalama hatası', 'error')
+    showToast(t('app.toasts.copyError'), 'error')
   })
 }
 
@@ -330,7 +337,8 @@ function openWhatsApp() {
 }
 
 function formatPrice(n) {
-  return (n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const loc = locale.value || navigator.language || 'en-US'
+  return (n || 0).toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function handleClickOutside(e) {
