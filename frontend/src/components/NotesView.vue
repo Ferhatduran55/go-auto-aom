@@ -3,9 +3,9 @@
     <!-- Sol Panel: Not Listesi -->
     <div class="notes-sidebar card">
       <div class="notes-header">
-        <h2 class="text-lg font-semibold">Notlar</h2>
+        <h2 class="text-lg font-semibold">{{ t('notes.title') }}</h2>
         <button @click="handleNewNote" class="btn btn-primary btn-sm">
-          + Yeni Not
+          {{ t('notes.newNote') }}
         </button>
       </div>
       
@@ -16,7 +16,7 @@
           @input="handleSearch"
           type="text" 
           class="form-input"
-          placeholder="Notlarda ara..."
+          :placeholder="t('notes.searchPlaceholder')"
         />
       </div>
       
@@ -24,11 +24,11 @@
       <div class="notes-list">
         <div v-if="loading" class="notes-loading">
           <div class="loading-spinner"></div>
-          <span>Yükleniyor...</span>
+          <span>{{ t('notes.loading') }}</span>
         </div>
         
         <div v-else-if="notes.length === 0" class="notes-empty">
-          <span class="text-muted">Henüz not yok</span>
+          <span class="text-muted">{{ t('notes.empty') }}</span>
         </div>
         
         <div 
@@ -38,7 +38,7 @@
           @click="handleSelectNote(note)"
           :class="['note-item', { active: currentNote?.id === note.id }]"
         >
-          <div class="note-item-title">{{ note.title || 'Başlıksız Not' }}</div>
+          <div class="note-item-title">{{ note.title || t('notes.untitled') }}</div>
           <div class="note-item-meta">
             <span v-if="note.customer_name" class="note-customer">{{ note.customer_name }}</span>
             <span class="note-date">{{ formatDate(note.updated_at) }}</span>
@@ -58,42 +58,42 @@
             @input="markModified"
             type="text" 
             class="title-input"
-            placeholder="Not başlığı..."
+            :placeholder="t('notes.titlePlaceholder')"
           />
           <div class="editor-actions">
             <button 
               @click="handleFormat" 
               class="btn btn-secondary btn-sm"
-              title="Metni otomatik formatla (hizala)"
+              :title="t('notes.formatTooltip')"
             >
-              ⚡ Formatla
+              ⚡ {{ t('notes.format') }}
             </button>
             <button 
               @click="handleSave" 
               class="btn btn-primary btn-sm"
               :disabled="!hasUnsavedChanges"
             >
-              💾 Kaydet
+              💾 {{ t('notes.save') }}
             </button>
             <button 
               @click="handleDelete" 
               class="btn btn-danger btn-sm"
               :disabled="!currentNote.id"
             >
-              🗑️ Sil
+              🗑️ {{ t('notes.delete') }}
             </button>
           </div>
         </div>
         
         <!-- Müşteri Adı -->
         <div class="customer-row">
-          <label>Müşteri:</label>
+          <label>{{ t('notes.customer') }}</label>
           <input 
             v-model="currentNote.customer_name"
             @input="markModified"
             type="text" 
             class="form-input customer-input"
-            placeholder="Müşteri adı (opsiyonel)"
+            :placeholder="t('notes.customerPlaceholder')"
           />
         </div>
         
@@ -103,35 +103,28 @@
             v-model="currentNote.content"
             @input="markModified"
             class="note-textarea"
-            placeholder="Not içeriği...
-
-İpucu: => veya -> gibi işaretler kullandıktan sonra 'Formatla' butonuna tıklayarak metni hizalayabilirsiniz.
-
-Örnek:
-Ürün A => 5 adet
-Ürün BB => 10 adet
-Ürün CCC => 3 adet"
+            :placeholder="t('notes.contentPlaceholder')"
           ></textarea>
         </div>
         
         <!-- Durum Çubuğu -->
         <div class="editor-footer">
           <span v-if="hasUnsavedChanges" class="unsaved-indicator">
-            ● Kaydedilmemiş değişiklikler
+            ● {{ t('notes.unsavedChanges') }}
           </span>
           <span v-else class="saved-indicator">
-            ✓ Kaydedildi
+            ✓ {{ t('notes.saved') }}
           </span>
-          <span class="char-count">{{ currentNote.content?.length || 0 }} karakter</span>
+          <span class="char-count">{{ t('notes.charCount', { count: currentNote.content?.length || 0 }) }}</span>
         </div>
       </template>
       
       <template v-else>
         <div class="editor-empty">
           <div class="empty-icon">📝</div>
-          <div class="empty-text">Bir not seçin veya yeni not oluşturun</div>
+          <div class="empty-text">{{ t('notes.selectOrCreate') }}</div>
           <button @click="handleNewNote" class="btn btn-primary">
-            + Yeni Not Oluştur
+            {{ t('notes.createNew') }}
           </button>
         </div>
       </template>
@@ -143,7 +136,9 @@
 import { ref, onMounted, watch } from 'vue'
 import { useNotes } from '@/composables/useNotes'
 import { useToast } from '@/composables/useToast'
+import { useI18n } from '@/i18n'
 
+const { t, locale } = useI18n()
 const { showToast } = useToast()
 const {
   notes,
@@ -183,7 +178,7 @@ function handleNewNote() {
 // Not seç
 async function handleSelectNote(note) {
   if (hasUnsavedChanges.value) {
-    if (!confirm('Kaydedilmemiş değişiklikler var. Devam etmek istiyor musunuz?')) {
+    if (!confirm(t('notes.unsavedConfirm'))) {
       return
     }
   }
@@ -194,9 +189,9 @@ async function handleSelectNote(note) {
 async function handleSave() {
   const result = await saveNote()
   if (result.success) {
-    showToast('Not kaydedildi', 'success')
+    showToast(t('notes.noteSaved'), 'success')
   } else {
-    showToast('Kaydetme hatası: ' + (result.error || 'Bilinmeyen hata'), 'error')
+    showToast(t('notes.saveError', { error: result.error || t('notes.unknownError') }), 'error')
   }
 }
 
@@ -204,22 +199,22 @@ async function handleSave() {
 async function handleDelete() {
   if (!currentNote.value?.id) return
   
-  if (!confirm('Bu notu silmek istediğinizden emin misiniz?')) {
+  if (!confirm(t('notes.deleteConfirm'))) {
     return
   }
   
   const result = await deleteNote(currentNote.value.id)
   if (result.success) {
-    showToast('Not silindi', 'success')
+    showToast(t('notes.noteDeleted'), 'success')
   } else {
-    showToast('Silme hatası: ' + (result.error || 'Bilinmeyen hata'), 'error')
+    showToast(t('notes.deleteError', { error: result.error || t('notes.unknownError') }), 'error')
   }
 }
 
 // Formatla
 async function handleFormat() {
   await formatCurrentNote()
-  showToast('Metin formatlandı', 'success')
+  showToast(t('notes.formatted'), 'success')
 }
 
 // Değişiklik işaretle
@@ -235,15 +230,16 @@ function formatDate(dateStr) {
   const date = new Date(dateStr)
   const now = new Date()
   const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
+  const loc = locale.value === 'tr' ? 'tr-TR' : 'en-US'
   
   if (diffDays === 0) {
-    return date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+    return date.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
   } else if (diffDays === 1) {
-    return 'Dün'
+    return t('notes.yesterday')
   } else if (diffDays < 7) {
-    return date.toLocaleDateString('tr-TR', { weekday: 'short' })
+    return date.toLocaleDateString(loc, { weekday: 'short' })
   } else {
-    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+    return date.toLocaleDateString(loc, { day: 'numeric', month: 'short' })
   }
 }
 

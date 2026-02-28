@@ -22,7 +22,7 @@
           <path d="M12 9v4"></path>
           <path d="M12 17h.01"></path>
         </svg>
-        Kritik Stok Uyarısı
+        {{ t('stock.criticalWarning') }}
       </div>
       
       <div class="dropdown-body">
@@ -40,7 +40,7 @@
             <span class="stock-value">{{ formatQuantity(product.stock_quantity, product.unit) }}</span>
             <span class="stock-unit">{{ product.unit || 'adet' }}</span>
           </div>
-          <button @click.stop="openStockIn(product)" class="item-action" title="Stok Ekle">
+          <button @click.stop="openStockIn(product)" class="item-action" :title="t('stock.addStock')">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 5v14"></path>
               <path d="M5 12h14"></path>
@@ -51,7 +51,7 @@
       
       <div class="dropdown-footer">
         <button @click="showAll" class="btn btn-sm btn-secondary">
-          Tüm Kritik Stokları Gör
+          {{ t('stock.viewAllCritical') }}
         </button>
       </div>
     </div>
@@ -62,7 +62,9 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useStock } from '../composables/useStock'
 import { useSettings } from '../composables/useSettings'
+import { useI18n } from '../i18n'
 
+const { t } = useI18n()
 const emit = defineEmits(['stock-in', 'product-selected', 'show-all'])
 
 const { settings } = useSettings()

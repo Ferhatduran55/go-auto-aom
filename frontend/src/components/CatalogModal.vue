@@ -10,11 +10,11 @@
                 📚
               </div>
               <div>
-                <h2 class="text-xl font-bold" style="color: var(--text-primary);">Ürün & Müşteri Kataloğu</h2>
-                <p class="text-sm" style="color: var(--text-muted);">İndekslenmiş verileri görüntüle ve düzenle</p>
+                <h2 class="text-xl font-bold" style="color: var(--text-primary);">{{ t('catalog.title') }}</h2>
+                <p class="text-sm" style="color: var(--text-muted);">{{ t('catalog.subtitle') }}</p>
               </div>
             </div>
-            <button @click="close" class="btn btn-secondary btn-sm">✕ Kapat</button>
+            <button @click="close" class="btn btn-secondary btn-sm">✕ {{ t('common.close') }}</button>
           </div>
           
           <!-- Tabs -->
@@ -23,13 +23,13 @@
               @click="activeTab = 'products'" 
               :class="['tab-btn', { active: activeTab === 'products' }]"
             >
-              🔧 Ürünler ({{ products.length }})
+              🔧 {{ t('catalog.productsTab', { count: products.length }) }}
             </button>
             <button 
               @click="activeTab = 'customers'" 
               :class="['tab-btn', { active: activeTab === 'customers' }]"
             >
-              👤 Müşteriler ({{ customers.length }})
+              👤 {{ t('catalog.customersTab', { count: customers.length }) }}
             </button>
           </div>
         </div>
@@ -40,7 +40,7 @@
             type="text" 
             v-model="searchQuery" 
             class="form-input" 
-            :placeholder="activeTab === 'products' ? '🔍 Ürün adı veya OEM ara...' : '🔍 Müşteri adı ara...'"
+            :placeholder="activeTab === 'products' ? t('catalog.searchProducts') : t('catalog.searchCustomers')"
           >
         </div>
         
@@ -50,7 +50,7 @@
           <template v-if="activeTab === 'products'">
             <div v-if="filteredProducts.length === 0" class="text-center py-12" style="color: var(--text-muted);">
               <div class="text-5xl mb-4 opacity-50">📦</div>
-              <p>Ürün bulunamadı</p>
+              <p>{{ t('products.noProducts') }}</p>
             </div>
             
             <div v-else class="grid gap-3">
@@ -68,10 +68,10 @@
                 </div>
                 <div class="stock-info">
                   <div class="stock-current" :class="{ 'stock-critical': product.stock_quantity <= (product.critical_stock || 3) }">
-                    {{ product.stock_quantity || 0 }} {{ product.unit || 'adet' }}
+                    {{ product.stock_quantity || 0 }} {{ product.unit || t('units.piece') }}
                   </div>
                   <div class="stock-critical-level">
-                    Kritik: {{ product.critical_stock || 3 }}
+                    {{ t('stock.criticalStock') }}: {{ product.critical_stock || 3 }}
                   </div>
                 </div>
                 <div class="flex gap-2">
@@ -86,7 +86,7 @@
           <template v-if="activeTab === 'customers'">
             <div v-if="filteredCustomers.length === 0" class="text-center py-12" style="color: var(--text-muted);">
               <div class="text-5xl mb-4 opacity-50">👥</div>
-              <p>Müşteri bulunamadı</p>
+              <p>{{ t('orders.customerNotFound') }}</p>
             </div>
             
             <div v-else class="grid gap-3">
@@ -103,7 +103,7 @@
                   </div>
                   <div class="text-sm" style="color: var(--text-muted);">
                     <span v-if="customer.phone" class="mr-2">📞 {{ customer.phone }}</span>
-                    <span>{{ customer.order_count || 0 }} sipariş • Toplam: ₺{{ formatPrice(customer.total_amount || 0) }}</span>
+                    <span>{{ customer.order_count || 0 }} {{ t('common.order') }} • {{ t('common.total') }}: {{ currency }}{{ formatPrice(customer.total_amount || 0) }}</span>
                   </div>
                 </div>
                 <div class="flex gap-2">
@@ -123,22 +123,22 @@
         <div class="p-6 bg-gradient-to-r from-accent/10 to-purple/10 text-center">
           <div class="text-4xl mb-2">{{ editModal.type === 'product' ? '🔧' : '👤' }}</div>
           <h3 class="text-lg font-bold" style="color: var(--text-primary);">
-            {{ editModal.type === 'product' ? 'Ürün Düzenle' : 'Müşteri Düzenle' }}
+            {{ editModal.type === 'product' ? t('products.editProduct') : t('catalog.editCustomer') }}
           </h3>
         </div>
         <div class="p-6">
           <div class="mb-4">
             <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">
-              {{ editModal.type === 'product' ? 'Ürün Adı' : 'Müşteri Adı' }}
+              {{ editModal.type === 'product' ? t('products.productName') : t('orders.customerName') }}
             </label>
             <input type="text" v-model="editModal.name" class="form-input">
           </div>
           <div v-if="editModal.type === 'product'" class="mb-4">
-            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">OEM Numarası</label>
+            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">{{ t('products.oemNumber') }}</label>
             <input type="text" v-model="editModal.oem" class="form-input">
           </div>
           <div v-if="editModal.type === 'customer'" class="mb-4">
-            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">📞 Telefon Numarası</label>
+            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">📞 {{ t('orders.phoneNumber') }}</label>
             <div class="flex items-stretch rounded-xl overflow-hidden border-2" style="border-color: var(--border-color);">
               <input 
                 type="text" 
@@ -158,8 +158,8 @@
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3 p-4" style="background: var(--bg-secondary);">
-          <button @click="editModal.visible = false" class="btn btn-secondary">İptal</button>
-          <button @click="saveEdit" class="btn btn-primary">💾 Kaydet</button>
+          <button @click="editModal.visible = false" class="btn btn-secondary">{{ t('common.cancel') }}</button>
+          <button @click="saveEdit" class="btn btn-primary">💾 {{ t('common.save') }}</button>
         </div>
       </div>
     </div>
@@ -170,10 +170,15 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { api } from '@/api'
 import { useToast } from '@/composables/useToast'
+import { useI18n } from '@/i18n'
+import { useSettings } from '@/composables/useSettings'
 
 const props = defineProps(['visible'])
+const { settings } = useSettings()
+const currency = computed(() => settings?.value?.currency || '₺')
 const emit = defineEmits(['close', 'updated'])
 
+const { t } = useI18n()
 const { showToast } = useToast()
 
 const activeTab = ref('products')
@@ -253,7 +258,7 @@ function editCustomer(customer) {
 
 async function saveEdit() {
   if (!editModal.name.trim()) {
-    showToast('İsim boş olamaz', 'error')
+    showToast(t('catalog.toasts.nameEmpty'), 'error')
     return
   }
   
@@ -264,7 +269,7 @@ async function saveEdit() {
         name: editModal.name.trim(),
         oem_number: editModal.oem.trim()
       })
-      showToast('Ürün güncellendi')
+      showToast(t('catalog.toasts.productUpdated'))
     } else {
       // Ülke kodu ve numara birleştir
       const fullPhone = editModal.phone.trim() 
@@ -275,39 +280,39 @@ async function saveEdit() {
         name: editModal.name.trim(),
         phone: fullPhone
       })
-      showToast('Müşteri güncellendi')
+      showToast(t('catalog.toasts.customerUpdated'))
     }
     editModal.visible = false
     await loadData()
     emit('updated')
   } catch (e) {
-    showToast('Güncelleme hatası', 'error')
+    showToast(t('catalog.toasts.updateError'), 'error')
   }
 }
 
 async function deleteProduct(product) {
-  if (!confirm(`"${product.name}" ürününü silmek istediğinize emin misiniz?`)) return
+  if (!confirm(t('app.confirms.deleteStockProductMessage', { name: product.name }))) return
   
   try {
     await api.deleteProduct(product.id)
-    showToast('Ürün silindi')
+    showToast(t('catalog.toasts.productDeleted'))
     await loadData()
     emit('updated')
   } catch (e) {
-    showToast('Silme hatası', 'error')
+    showToast(t('catalog.toasts.deleteError'), 'error')
   }
 }
 
 async function deleteCustomer(customer) {
-  if (!confirm(`"${customer.name}" müşterisini silmek istediğinize emin misiniz?`)) return
+  if (!confirm(t('app.confirms.deleteStockProductMessage', { name: customer.name }))) return
   
   try {
     await api.deleteCustomer(customer.id)
-    showToast('Müşteri silindi')
+    showToast(t('catalog.toasts.customerDeleted'))
     await loadData()
     emit('updated')
   } catch (e) {
-    showToast('Silme hatası', 'error')
+    showToast(t('catalog.toasts.deleteError'), 'error')
   }
 }
 

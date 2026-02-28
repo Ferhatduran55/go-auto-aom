@@ -7,7 +7,7 @@
             <path d="M12 20h9"></path>
             <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
           </svg>
-          Stok Hareketleri
+          {{ t('stock.movements') }}
           <span v-if="selectedProduct" class="product-badge">{{ selectedProduct.name }}</span>
         </h2>
         <button @click="$emit('close')" class="close-btn">
@@ -22,11 +22,11 @@
       <div class="filter-bar">
         <div class="date-filters">
           <div class="form-group">
-            <label>Başlangıç</label>
+            <label>{{ t('common.startDate') }}</label>
             <input type="date" v-model="filter.start" class="form-input" />
           </div>
           <div class="form-group">
-            <label>Bitiş</label>
+            <label>{{ t('common.endDate') }}</label>
             <input type="date" v-model="filter.end" class="form-input" />
           </div>
         </div>
@@ -37,28 +37,28 @@
             @click="applyQuickFilter('today')"
             class="quick-btn"
           >
-            Bugün
+            {{ t('common.today') }}
           </button>
           <button 
             :class="{ active: quickFilter === 'week' }" 
             @click="applyQuickFilter('week')"
             class="quick-btn"
           >
-            Bu Hafta
+            {{ t('common.thisWeek') }}
           </button>
           <button 
             :class="{ active: quickFilter === 'month' }" 
             @click="applyQuickFilter('month')"
             class="quick-btn"
           >
-            Bu Ay
+            {{ t('common.thisMonth') }}
           </button>
           <button 
             :class="{ active: quickFilter === 'all' }" 
             @click="applyQuickFilter('all')"
             class="quick-btn"
           >
-            Tümü
+            {{ t('common.all') }}
           </button>
         </div>
         
@@ -66,7 +66,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
           </svg>
-          Filtrele
+          {{ t('common.filter') }}
         </button>
       </div>
       
@@ -80,7 +80,7 @@
             </svg>
             <div class="stat-content">
               <span class="stat-value">{{ totalIn }}</span>
-              <span class="stat-label">Toplam Giriş</span>
+              <span class="stat-label">{{ t('reports.totalEntry') }}</span>
             </div>
           </div>
           <div class="stat-item exit">
@@ -89,7 +89,7 @@
             </svg>
             <div class="stat-content">
               <span class="stat-value">{{ totalOut }}</span>
-              <span class="stat-label">Toplam Çıkış</span>
+              <span class="stat-label">{{ t('reports.totalExit') }}</span>
             </div>
           </div>
           <div class="stat-item movement">
@@ -99,7 +99,7 @@
             </svg>
             <div class="stat-content">
               <span class="stat-value">{{ movements.length }}</span>
-              <span class="stat-label">Hareket Sayısı</span>
+              <span class="stat-label">{{ t('stock.movementCount') }}</span>
             </div>
           </div>
         </div>
@@ -109,11 +109,11 @@
           <table class="movements-table">
             <thead>
               <tr>
-                <th>Tarih</th>
-                <th v-if="!selectedProduct">Ürün</th>
-                <th class="text-center">Tip</th>
-                <th class="text-right">Miktar</th>
-                <th>Açıklama</th>
+                <th>{{ t('common.date') }}</th>
+                <th v-if="!selectedProduct">{{ t('common.product') }}</th>
+                <th class="text-center">{{ t('reports.type') }}</th>
+                <th class="text-right">{{ t('common.quantity') }}</th>
+                <th>{{ t('common.description') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -129,7 +129,7 @@
                     <path d="M12 20h9"></path>
                     <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path>
                   </svg>
-                  <p>Bu tarih aralığında hareket bulunamadı</p>
+                  <p>{{ t('stock.noMovementsInRange') }}</p>
                 </td>
               </tr>
               <tr 
@@ -152,7 +152,7 @@
                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M5 12h14"></path>
                     </svg>
-                    {{ movement.movement_type === 'in' ? 'Giriş' : 'Çıkış' }}
+                    {{ movement.movement_type === 'in' ? t('reports.entry') : t('reports.exit') }}
                   </span>
                 </td>
                 <td class="text-right amount-cell">
@@ -170,10 +170,10 @@
         <div v-if="movements.length > 0" class="pagination-bar">
           <div class="pagination-info">
             <span v-if="!showAll">
-              {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, movements.length) }} / {{ movements.length }} hareket
+              {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, movements.length) }} / {{ movements.length }} {{ t('stock.movementsLower') }}
             </span>
             <span v-else>
-              Tüm {{ movements.length }} hareket gösteriliyor
+              {{ t('stock.showingAllMovements', { count: movements.length }) }}
             </span>
           </div>
           
@@ -183,7 +183,7 @@
               class="btn btn-sm"
               :class="showAll ? 'btn-primary' : 'btn-secondary'"
             >
-              {{ showAll ? 'Sayfalı Göster' : 'Tümünü Göster' }}
+              {{ showAll ? t('common.showPaginated') : t('common.showAll') }}
             </button>
             
             <template v-if="!showAll && totalPages > 1">
@@ -233,7 +233,9 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useStock } from '../composables/useStock'
+import { useI18n } from '@/i18n'
 
+const { t, locale } = useI18n()
 const props = defineProps({
   selectedProduct: {
     type: Object,
@@ -337,19 +339,29 @@ const loadMovements = async () => {
 // Date formatting
 const formatDate = (dateStr) => {
   const date = new Date(dateStr)
-  return date.toLocaleDateString('tr-TR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
+  const loc = locale.value || navigator.language || 'en-US'
+  try {
+    return date.toLocaleDateString(loc, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  } catch {
+    return date.toLocaleDateString()
+  }
 }
 
 const formatTime = (dateStr) => {
   const date = new Date(dateStr)
-  return date.toLocaleTimeString('tr-TR', {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  const loc = locale.value || navigator.language || 'en-US'
+  try {
+    return date.toLocaleTimeString(loc, {
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return date.toLocaleTimeString()
+  }
 }
 
 const formatDateInput = (date) => {

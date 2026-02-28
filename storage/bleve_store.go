@@ -326,12 +326,12 @@ func (s *BleveStore) GetOrder(id string) (*Order, error) {
 	orderFile := filepath.Join(s.dataPath, "orders", id+".json")
 	data, err := os.ReadFile(orderFile)
 	if err != nil {
-		return nil, fmt.Errorf("sipariş bulunamadı: %w", err)
+		return nil, fmt.Errorf("order not found: %w", err)
 	}
 
 	var order Order
 	if err := json.Unmarshal(data, &order); err != nil {
-		return nil, fmt.Errorf("JSON çözümleme hatası: %w", err)
+		return nil, fmt.Errorf("JSON unmarshal error: %w", err)
 	}
 
 	return &order, nil
@@ -341,13 +341,13 @@ func (s *BleveStore) GetOrder(id string) (*Order, error) {
 func (s *BleveStore) DeleteOrder(id string) error {
 	// Bleve'den sil
 	if err := s.index.Delete(id); err != nil {
-		return fmt.Errorf("index silme hatası: %w", err)
+		return fmt.Errorf("index delete error: %w", err)
 	}
 
 	// Dosyadan sil
 	orderFile := filepath.Join(s.dataPath, "orders", id+".json")
 	if err := os.Remove(orderFile); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("dosya silme hatası: %w", err)
+		return fmt.Errorf("file delete error: %w", err)
 	}
 
 	return nil
@@ -364,7 +364,7 @@ func (s *BleveStore) ListOrders() ([]*Order, error) {
 
 	entries, err := os.ReadDir(ordersDir)
 	if err != nil {
-		return nil, fmt.Errorf("dizin okunamadı: %w", err)
+		return nil, fmt.Errorf("directory read error: %w", err)
 	}
 
 	var orders []*Order

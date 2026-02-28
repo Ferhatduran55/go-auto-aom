@@ -7,15 +7,15 @@
       </div>
       <div class="flex-1">
         <h3 class="text-lg font-bold" style="color: var(--text-primary);">
-          {{ isAdvancedSearch ? '🔎 Arama Sonuçları' : (customerFilterActive ? '👤 ' + customerName : 'Kayıtlı Siparişler') }}
+          {{ isAdvancedSearch ? '🔎 ' + t('common.searchResults') : (customerFilterActive ? '👤 ' + customerName : t('orders.savedOrders')) }}
         </h3>
         <span class="text-sm" style="color: var(--text-muted);">
-          {{ orders.length }} sipariş
+          {{ orders.length }} {{ t('common.order') }}
           <span v-if="customerFilterActive && !isAdvancedSearch" class="ml-2 px-2 py-0.5 bg-accent/20 text-accent rounded-full text-xs font-semibold">
-            Müşteri Filtreli
+            {{ t('orders.customerFiltered') }}
           </span>
           <span v-if="isAdvancedSearch" class="ml-2 px-2 py-0.5 bg-warning/20 text-warning rounded-full text-xs font-semibold">
-            Gelişmiş Arama
+            {{ t('common.advancedSearch') }}
           </span>
         </span>
       </div>
@@ -23,9 +23,9 @@
         v-if="isAdvancedSearch" 
         @click="clearAdvancedSearch" 
         class="btn btn-sm btn-secondary"
-        title="Aramayı temizle"
+        :title="t('common.clearSearch')"
       >
-        ✕ Temizle
+        ✕ {{ t('common.clear') }}
       </button>
     </div>
 
@@ -37,9 +37,9 @@
           v-model="searchTerm" 
           @input="onSearch"
           class="form-input flex-1" 
-          placeholder="🔍 Hızlı ara..."
+          :placeholder="'🔍 ' + t('common.quickSearch')"
         >
-        <button @click="$emit('showAdvancedSearch')" class="btn btn-secondary btn-sm" title="Gelişmiş Arama">🔎</button>
+        <button @click="$emit('showAdvancedSearch')" class="btn btn-secondary btn-sm" :title="t('common.advancedSearch')">🔎</button>
       </div>
       
       <div class="flex gap-2 flex-wrap">
@@ -56,15 +56,15 @@
       <div v-if="currentFilter === 'range'" class="mt-3 space-y-2">
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-2">
-            <span class="text-xs whitespace-nowrap" style="color: var(--text-muted);">Başlangıç:</span>
+            <span class="text-xs whitespace-nowrap" style="color: var(--text-muted);">{{ t('common.start') }}:</span>
             <input type="date" v-model="startDate" class="form-input flex-1 !py-2 !text-sm">
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-xs whitespace-nowrap" style="color: var(--text-muted);">Bitiş:</span>
+            <span class="text-xs whitespace-nowrap" style="color: var(--text-muted);">{{ t('common.end') }}:</span>
             <input type="date" v-model="endDate" class="form-input flex-1 !py-2 !text-sm">
           </div>
         </div>
-        <button @click="loadOrders" class="btn btn-primary btn-sm w-full">📅 Uygula</button>
+        <button @click="loadOrders" class="btn btn-primary btn-sm w-full">📅 {{ t('common.apply') }}</button>
       </div>
     </div>
 
@@ -72,7 +72,7 @@
     <div class="flex-1 overflow-y-auto p-4">
       <div v-if="orders.length === 0" class="text-center py-12" style="color: var(--text-muted);">
         <div class="text-6xl mb-4 opacity-50">📭</div>
-        <p>Sipariş bulunamadı</p>
+        <p>{{ t('orders.noOrders') }}</p>
       </div>
       
       <div 
@@ -83,21 +83,21 @@
       >
         <div class="flex items-center gap-2 font-bold mb-2" style="color: var(--text-primary);">
           <span class="text-lg">📋</span>
-          {{ order.title || 'İsimsiz Sipariş' }}
+          {{ order.title || t('orders.unnamed') }}
         </div>
         <div class="flex items-center gap-2 text-sm mb-3 pb-3 border-b" style="color: var(--text-muted); border-color: var(--border-color);">
-          👤 {{ order.customer_name || 'Müşteri belirtilmemiş' }}
+          👤 {{ order.customer_name || t('orders.customerNotSpecified') }}
         </div>
         <div class="flex justify-between items-center">
           <div class="flex gap-4 text-xs" style="color: var(--text-muted);">
             <span>📦 {{ order.items?.length || 0 }}</span>
             <span>📅 {{ formatDate(order.created_at) }}</span>
           </div>
-          <div class="font-extrabold text-success text-lg">₺{{ formatPrice(order.grand_total || 0) }}</div>
+          <div class="font-extrabold text-success text-lg">{{ currency }}{{ formatPrice(order.grand_total || 0) }}</div>
         </div>
         <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t" style="border-color: var(--border-color);">
-          <button @click.stop="handleOrderClick(order.id)" class="btn btn-sm btn-secondary">📝 Düzenle</button>
-          <button @click.stop="$emit('deleteOrder', order.id)" class="btn btn-sm btn-danger">🗑️ Sil</button>
+          <button @click.stop="handleOrderClick(order.id)" class="btn btn-sm btn-secondary">📝 {{ t('common.edit') }}</button>
+          <button @click.stop="$emit('deleteOrder', order.id)" class="btn btn-sm btn-danger">🗑️ {{ t('common.delete') }}</button>
         </div>
       </div>
     </div>
@@ -108,7 +108,11 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { api } from '@/api'
 import { useOrder } from '@/composables/useOrder'
+import { useI18n } from '@/i18n'
+import { useSettings } from '@/composables/useSettings'
 
+const { t, locale } = useI18n()
+const { settings } = useSettings()
 const props = defineProps(['refreshTrigger', 'advancedSearchResults'])
 const emit = defineEmits(['loadOrder', 'deleteOrder', 'showAdvancedSearch', 'clearAdvancedSearch'])
 
@@ -122,11 +126,11 @@ const endDate = ref('')
 const isAdvancedSearch = ref(false)
 let searchTimeout = null
 
-const filters = [
-  { label: 'Bugün', value: 'today' },
-  { label: 'Tümü', value: 'all' },
-  { label: 'Tarih Aralığı', value: 'range' },
-]
+const filters = computed(() => [
+  { label: t('common.today'), value: 'today' },
+  { label: t('common.all'), value: 'all' },
+  { label: t('common.dateRange'), value: 'range' },
+])
 
 // Müşteri filtresine göre siparişleri filtrele
 const orders = computed(() => {
@@ -141,11 +145,18 @@ const orders = computed(() => {
 })
 
 function formatPrice(n) {
-  return (n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const loc = locale.value || navigator.language || 'en-US'
+  return (n || 0).toLocaleString(loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function formatDate(d) {
-  return d ? new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'
+  if (!d) return '-'
+  const loc = locale.value || navigator.language || 'en-US'
+  try {
+    return new Date(d).toLocaleDateString(loc, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  } catch {
+    return new Date(d).toLocaleString()
+  }
 }
 
 // Sipariş kartına tıklandığında - aynı siparişe tıklanırsa hiçbir şey yapma

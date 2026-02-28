@@ -2,8 +2,8 @@
   <div class="card">
     <!-- Edit Banner -->
     <div v-if="editingProductId" class="bg-accent text-white px-5 py-3 flex items-center justify-between font-semibold">
-      ✏️ Ürün Düzenleniyor
-      <button @click="cancelEdit" class="btn btn-sm bg-white/20">İptal</button>
+      ✏️ {{ t('products.editingProduct') }}
+      <button @click="cancelEdit" class="btn btn-sm bg-white/20">{{ t('common.cancel') }}</button>
     </div>
     
     <!-- Header -->
@@ -12,8 +12,8 @@
         ➕
       </div>
       <div>
-        <h3 class="text-lg font-bold" style="color: var(--text-primary);">{{ editingProductId ? 'Ürünü Düzenle' : 'Ürün Ekle' }}</h3>
-        <span class="text-sm" style="color: var(--text-muted);">Sipariş kalemi ekleyin</span>
+        <h3 class="text-lg font-bold" style="color: var(--text-primary);">{{ editingProductId ? t('products.editProduct') : t('products.addProduct') }}</h3>
+        <span class="text-sm" style="color: var(--text-muted);">{{ t('products.orderItemSubtitle') }}</span>
       </div>
     </div>
 
@@ -22,7 +22,7 @@
       <form @submit.prevent="handleSubmit">
         <!-- Ürün Adı -->
         <div class="mb-4 relative">
-          <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">Ürün Adı</label>
+          <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">{{ t('products.name') }}</label>
           <input 
             ref="productNameInput"
             type="text" 
@@ -30,7 +30,7 @@
             @input="onProductInput"
             @focus="showProductDropdown = true"
             class="form-input" 
-            placeholder="Ürün adı yazın..."
+            :placeholder="t('products.namePlaceholder')"
             autocomplete="off"
             required
           >
@@ -43,21 +43,21 @@
               class="px-4 py-3 cursor-pointer border-b last:border-b-0 hover:bg-accent hover:text-white transition-colors" style="border-color: var(--border-color);"
             >
               <div class="font-semibold" style="color: var(--text-primary);">🔧 {{ p.name }}</div>
-              <div class="text-sm" style="color: var(--text-muted);">OEM: {{ p.oem_number }} • {{ p.used_count || 0 }}x kullanıldı</div>
+              <div class="text-sm" style="color: var(--text-muted);">OEM: {{ p.oem_number }} • {{ p.used_count || 0 }}x {{ t('products.usedInOrders') }}</div>
             </div>
           </div>
         </div>
 
         <!-- OEM Numarası -->
         <div class="mb-4 relative">
-          <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">OEM Numarası</label>
+          <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">{{ t('products.oemNumber') }}</label>
           <input 
             type="text" 
             v-model="form.oem" 
             @input="onOEMInput"
             @focus="showOEMDropdown = true"
             class="form-input" 
-            placeholder="OEM kodu"
+            :placeholder="t('products.oemPlaceholder')"
             autocomplete="off"
           >
           <div v-if="showOEMDropdown && filteredOEMs.length > 0" 
@@ -77,33 +77,33 @@
         <!-- Adet ve Birim Fiyat -->
         <div class="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">Adet</label>
+            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">{{ t('common.quantity') }}</label>
             <input type="number" v-model.number="form.quantity" min="1" class="form-input" required>
           </div>
           <div>
-            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">Birim Fiyat (₺)</label>
+            <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">{{ t('common.unitPriceFull', { currency: currency }) }}</label> 
             <input type="number" v-model.number="form.unitPrice" min="0" step="0.01" class="form-input" placeholder="0.00" required>
           </div>
         </div>
 
         <!-- Parça Durumu -->
         <div class="mb-4">
-          <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">Parça Durumu</label>
+          <label class="block mb-2 text-sm font-semibold" style="color: var(--text-muted);">{{ t('products.condition') }}</label>
           <AutocompleteSelect
             v-model="form.partStatus"
             :items="partStatusOptions"
-            placeholder="Durum seçin..."
+            :placeholder="t('products.conditionPlaceholder')"
           />
         </div>
 
         <button type="submit" class="btn btn-primary btn-block">
-          {{ editingProductId ? '✓ Güncelle' : '➕ Listeye Ekle' }}
+          {{ editingProductId ? '✓ ' + t('products.updateInList') : '➕ ' + t('products.addToList') }}
         </button>
       </form>
 
       <div class="grid grid-cols-2 gap-3 mt-4">
-        <button @click="clearForm" class="btn btn-secondary">🔄 Temizle</button>
-        <button @click="$emit('clearAll')" class="btn btn-secondary">🗑️ Listeyi Sil</button>
+        <button @click="clearForm" class="btn btn-secondary">🔄 {{ t('products.clearForm') }}</button>
+        <button @click="$emit('clearAll')" class="btn btn-secondary">🗑️ {{ t('products.deleteList') }}</button>
       </div>
     </div>
   </div>
@@ -114,32 +114,32 @@
       <div class="bg-card rounded-2xl w-[90%] max-w-[500px] border border-border overflow-hidden animate-modal">
         <div class="p-8 text-center bg-gradient-to-r from-warning/20 to-danger/20">
           <div class="text-5xl mb-4">⚠️</div>
-          <div class="text-xl font-bold mb-2 text-slate-200">OEM Çakışması Tespit Edildi</div>
-          <div class="text-slate-400">Bu OEM numarası farklı bir ürün adıyla kayıtlı</div>
+          <div class="text-xl font-bold mb-2 text-slate-200">{{ t('products.oemConflict') }}</div>
+          <div class="text-slate-400">{{ t('products.oemConflictDesc') }}</div>
         </div>
         <div class="p-6">
           <div class="bg-secondary p-4 rounded-xl mb-4">
-            <div class="text-sm text-slate-400 mb-2">OEM Numarası</div>
+            <div class="text-sm text-slate-400 mb-2">{{ t('products.oemNumber') }}</div>
             <div class="text-xl font-bold text-warning">{{ conflictData.oem }}</div>
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div class="bg-secondary p-4 rounded-xl border-2 border-success">
-              <div class="text-xs text-slate-400 mb-1">📦 Kayıtlı Ürün</div>
+              <div class="text-xs text-slate-400 mb-1">📦 {{ t('products.registeredProduct') }}</div>
               <div class="font-semibold text-success">{{ conflictData.existingName }}</div>
             </div>
             <div class="bg-secondary p-4 rounded-xl border-2 border-accent">
-              <div class="text-xs text-slate-400 mb-1">🆕 Yeni Girilen</div>
+              <div class="text-xs text-slate-400 mb-1">🆕 {{ t('products.newEntry') }}</div>
               <div class="font-semibold text-accent">{{ conflictData.newName }}</div>
             </div>
           </div>
           <div class="mt-4 p-3 bg-accent/10 rounded-lg text-sm text-slate-400">
-            💡 Aynı OEM farklı ürünlerde kullanılabilir. Yeni isimle kaydetmek isterseniz "Yeni Oluştur" seçin.
+            💡 {{ t('products.oemConflictHint') }}
           </div>
         </div>
         <div class="grid grid-cols-3 gap-3 p-5 bg-secondary">
-          <button @click="showConflictModal = false" class="btn btn-secondary">İptal</button>
-          <button @click="useExisting" class="btn btn-success">Mevcut Kullan</button>
-          <button @click="createNew" class="btn btn-primary">Yeni Oluştur</button>
+          <button @click="showConflictModal = false" class="btn btn-secondary">{{ t('common.cancel') }}</button>
+          <button @click="useExisting" class="btn btn-success">{{ t('products.useExisting') }}</button>
+          <button @click="createNew" class="btn btn-primary">{{ t('products.createNew') }}</button>
         </div>
       </div>
     </div>
@@ -150,8 +150,13 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useOrder } from '@/composables/useOrder'
 import { useToast } from '@/composables/useToast'
-import AutocompleteSelect from './AutocompleteSelect.vue'
+import { useI18n } from '@/i18n'
+import { useSettings } from '@/composables/useSettings'
+import AutocompleteSelect from './AutocompleteSelect.vue' 
 
+const { t } = useI18n()
+const { settings } = useSettings()
+const currency = computed(() => settings?.value?.currency || '₺')
 const emit = defineEmits(['clearAll'])
 
 const { allProducts, editingProductId, products, addProduct, updateProduct, checkOEMConflict } = useOrder()
@@ -166,11 +171,11 @@ const form = reactive({
 })
 
 // Part status options for autocomplete
-const partStatusOptions = [
-  { label: '🟢 Orijinal', value: 'original' },
-  { label: '🟡 Çıkma', value: 'used' },
-  { label: '🔵 Sıfır', value: 'zero' }
-]
+const partStatusOptions = computed(() => [
+  { label: t('products.conditionOriginal'), value: 'original' },
+  { label: t('products.conditionUsed'), value: 'used' },
+  { label: t('products.conditionNew'), value: 'zero' }
+])
 
 const showProductDropdown = ref(false)
 const showOEMDropdown = ref(false)
@@ -220,7 +225,7 @@ function selectOEM(p) {
 
 function handleSubmit() {
   if (!form.name || form.quantity < 1 || !form.unitPrice) {
-    showToast('Geçerli değerler girin', 'error')
+    showToast(t('products.invalidValues'), 'error')
     return
   }
 
@@ -232,7 +237,7 @@ function handleSubmit() {
       unitPrice: parseFloat(form.unitPrice),
       partStatus: form.partStatus
     })
-    showToast('Ürün güncellendi')
+    showToast(t('products.updated'))
     clearForm()
     return
   }
@@ -254,14 +259,14 @@ function handleSubmit() {
     unitPrice: parseFloat(form.unitPrice),
     partStatus: form.partStatus
   })
-  showToast('Ürün eklendi')
+  showToast(t('products.added'))
   clearForm()
 }
 
 function useExisting() {
   form.name = conflictData.existingName
   showConflictModal.value = false
-  showToast('Mevcut ürün adı kullanıldı')
+  showToast(t('products.existingUsed'))
 }
 
 function createNew() {
@@ -273,7 +278,7 @@ function createNew() {
     partStatus: form.partStatus
   })
   showConflictModal.value = false
-  showToast('Farklı isimle yeni ürün oluşturuldu')
+  showToast(t('products.newCreated'))
   clearForm()
 }
 

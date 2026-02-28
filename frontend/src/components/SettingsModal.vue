@@ -7,7 +7,7 @@
             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
             <circle cx="12" cy="12" r="3"/>
           </svg>
-          Ayarlar
+          {{ t('settings.title') }}
         </h2>
         <button @click="$emit('close')" class="close-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -34,27 +34,38 @@
         <!-- Genel Tab -->
         <div v-if="activeTab === 'general'" class="settings-section">
           <div class="setting-group">
-            <label class="setting-label">Sayfa Başına Öğe</label>
-            <p class="setting-desc">Listelerde gösterilecek öğe sayısı</p>
+            <label class="setting-label">{{ t('settings.itemsPerPage') }}</label>
+            <p class="setting-desc">{{ t('settings.itemsPerPageDesc') }}</p>
             <AutocompleteSelect
               :model-value="settings.itemsPerPage"
               @update:model-value="v => { settings.itemsPerPage = Number(v); saveSettings() }"
               :items="itemsPerPageOptions"
-              placeholder="Seçin..."
+              :placeholder="t('common.select')"
             />
           </div>
           
           <div class="setting-group">
-            <label class="setting-label">Varsayılan Birim</label>
-            <p class="setting-desc">Yeni ürünler için varsayılan birim</p>
+            <label class="setting-label">{{ t('settings.defaultUnit') }}</label>
+            <p class="setting-desc">{{ t('settings.defaultUnitDesc') }}</p>
             <AutocompleteSelect
               v-model="settings.defaultUnit"
               :items="unitOptions"
-              placeholder="Birim seçin..."
+              :placeholder="t('common.select')"
               @update:model-value="saveSettings"
             />
           </div>
           
+          <div class="setting-group">
+            <label class="setting-label">{{ t('settings.currency') }}</label>
+            <p class="setting-desc">{{ t('settings.currencyDesc') }}</p>
+            <AutocompleteSelect
+              v-model="settings.currency"
+              :items="currencyOptions"
+              :placeholder="t('common.select')"
+              @update:model-value="saveSettings"
+            />
+          </div>
+
           <div class="setting-group">
             <label class="setting-toggle">
               <input 
@@ -64,8 +75,8 @@
               />
               <span class="toggle-slider"></span>
               <span class="toggle-label">
-                <strong>Otomatik Stok Düşürme</strong>
-                <small>Sipariş kaydedildiğinde stoktan otomatik düş</small>
+                <strong>{{ t('settings.autoStockDeduction') }}</strong>
+                <small>{{ t('settings.autoStockDeductionDesc') }}</small>
               </span>
             </label>
           </div>
@@ -73,23 +84,45 @@
         
         <!-- Görünüm Tab -->
         <div v-if="activeTab === 'appearance'" class="settings-section">
+          <!-- Dil Ayarı -->
           <div class="setting-group">
-            <label class="setting-label">Tema</label>
-            <p class="setting-desc">Uygulama renk teması</p>
+            <label class="setting-label">{{ t('settings.language') }}</label>
+            <p class="setting-desc">{{ t('settings.languageDesc') }}</p>
+            <div class="theme-options">
+              <button 
+                :class="['theme-option', { active: locale === 'tr' }]"
+                @click="setLocale('tr')"
+              >
+                <span class="theme-icon">🇹🇷</span>
+                <span>{{ t('language.tr') }}</span>
+              </button>
+              <button 
+                :class="['theme-option', { active: locale === 'en' }]"
+                @click="setLocale('en')"
+              >
+                <span class="theme-icon">🇬🇧</span>
+                <span>{{ t('language.en') }}</span>
+              </button>
+            </div>
+          </div>
+          
+          <div class="setting-group">
+            <label class="setting-label">{{ t('settings.theme') }}</label>
+            <p class="setting-desc">{{ t('settings.themeDesc') }}</p>
             <div class="theme-options">
               <button 
                 :class="['theme-option', { active: settings.theme === 'light' }]"
                 @click="setTheme('light')"
               >
                 <span class="theme-icon">☀️</span>
-                <span>Aydınlık</span>
+                <span>{{ t('settings.themeLight') }}</span>
               </button>
               <button 
                 :class="['theme-option', { active: settings.theme === 'dark' }]"
                 @click="setTheme('dark')"
               >
                 <span class="theme-icon">🌙</span>
-                <span>Karanlık</span>
+                <span>{{ t('settings.themeDark') }}</span>
               </button>
             </div>
           </div>
@@ -102,8 +135,8 @@
               <img src="/favicon.ico" alt="AutoManagement" width="48" height="48" />
             </div>
             <div class="app-info">
-              <h3>AutoManagement</h3>
-              <p class="app-subtitle">Oto Yönetim Sistemi</p>
+              <h3>{{ t('app.title') }}</h3>
+              <p class="app-subtitle">{{ t('app.subtitle') }}</p>
               <p class="app-version">
                 <span class="version-badge">v{{ currentVersion }}</span>
                 <template v-if="currentStatus && currentStatus.length">
@@ -128,8 +161,96 @@
             </a>
           </div>
           
+          <!-- Güncelleme Kontrolü -->
+          <div class="update-section">
+            <div class="update-header">
+              <h4>{{ t('settings.update') }}</h4>
+              <button 
+                class="check-update-btn"
+                :disabled="checkingUpdate"
+                @click="checkUpdate"
+              >
+                <svg v-if="checkingUpdate" class="spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
+                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                  <path d="M16 21h5v-5"/>
+                </svg>
+                {{ checkingUpdate ? t('settings.checkingUpdates') : t('settings.checkUpdates') }}
+              </button>
+            </div>
+            
+            <!-- Güncelleme Durumu -->
+            <div v-if="updateInfo" :class="['update-status', { 'has-update': updateInfo.available }]">
+              <template v-if="updateInfo.error">
+                <div class="update-error">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="m15 9-6 6"/>
+                    <path d="m9 9 6 6"/>
+                  </svg>
+                  <span>{{ updateInfo.error }}</span>
+                </div>
+              </template>
+              <template v-else-if="updateInfo.available">
+                <div class="update-available">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  <div class="update-details">
+                    <strong>{{ t('settings.newVersionAvailable', { version: updateInfo.latest_version }) }}</strong>
+                    <p>{{ updateInfo.release_name }}</p>
+                    <small v-if="updateInfo.published_at">{{ formatDate(updateInfo.published_at) }}</small>
+                  </div>
+                </div>
+                <a 
+                  :href="updateInfo.release_url" 
+                  target="_blank" 
+                  class="download-btn"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                  {{ t('settings.downloadUpdate') }}
+                </a>
+              </template>
+              <template v-else>
+                <div class="update-current">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                  <span>{{ t('settings.upToDate', { version: updateInfo.current_version }) }}</span>
+                </div>
+              </template>
+            </div>
+            
+            <!-- Otomatik Güncelleme Seçeneği -->
+            <div class="setting-group" style="margin-top: 1rem;">
+              <label class="setting-toggle">
+                <input 
+                  type="checkbox" 
+                  v-model="settings.autoUpdateCheck"
+                  @change="saveSettings"
+                />
+                <span class="toggle-slider"></span>
+                <span class="toggle-label">
+                  <strong>{{ t('settings.autoCheckUpdates') }}</strong>
+                  <small>{{ t('settings.autoCheckUpdatesDesc') }}</small>
+                </span>
+              </label>
+            </div>
+          </div>
+          
           <div class="changelog">
-            <h4>Değişiklik Günlüğü</h4>
+            <h4>{{ t('settings.changelog') }}</h4>
             <div v-for="release in changelog" :key="release.version" class="changelog-item">
               <div class="changelog-header">
                 <span class="changelog-version">
@@ -142,14 +263,14 @@
                 <span class="changelog-date">{{ release.date }}</span>
               </div>
               <ul class="changelog-changes">
-                <li v-for="(change, i) in release.changes" :key="i">{{ change }}</li>
+                <li v-for="(change, i) in release.changes" :key="i" v-html="formatChangelog(change)"></li>
               </ul>
             </div>
           </div>
           
           <div class="about-footer">
-            <p>© 2025 Durasoft • MIT License</p>
-            <p>🔓 Open Source</p>
+            <p>{{ t('settings.copyright', { year: new Date().getFullYear() }) }}</p>
+            <p>🔓 {{ t('settings.openSource') }}</p>
           </div>
         </div>
         
@@ -162,8 +283,8 @@
               <path d="M12 17h.01"></path>
             </svg>
             <div>
-              <strong>Geliştirici Seçenekleri</strong>
-              <p>Bu ayarlar geliştiriciler içindir. Yanlış kullanım uygulamanın performansını etkileyebilir.</p>
+              <strong>{{ t('settings.developerOptions') }}</strong>
+              <p>{{ t('settings.developerWarning') }}</p>
             </div>
           </div>
           
@@ -176,8 +297,8 @@
               />
               <span class="toggle-slider"></span>
               <span class="toggle-label">
-                <strong>Geliştirici Modu</strong>
-                <small>F12 ile DevTools, sağ tık menüsü (yeniden başlatma gerektirir)</small>
+                <strong>{{ t('settings.developerMode') }}</strong>
+                <small>{{ t('settings.developerModeDesc') }}</small>
               </span>
             </label>
           </div>
@@ -191,8 +312,8 @@
               />
               <span class="toggle-slider"></span>
               <span class="toggle-label">
-                <strong>Kritik Stok Uyarısını Gizle</strong>
-                <small>Üst menüdeki kritik stok uyarı rozetini gizle</small>
+                <strong>{{ t('settings.hideCriticalStock') }}</strong>
+                <small>{{ t('settings.hideCriticalStockDesc') }}</small>
               </span>
             </label>
           </div>
@@ -203,17 +324,29 @@
               <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
               <path d="M21 3v5h-5"/>
             </svg>
-            <span>Değişikliklerin etkili olması için uygulamayı yeniden başlatın</span>
+            <span>{{ t('settings.restartRequired') }}</span>
           </div>
           
           <div v-if="settings.developerMode" class="developer-info">
-            <h4>Aktif Geliştirici Özellikleri:</h4>
+            <h4>{{ t('settings.activeFeatures') }}</h4>
             <ul>
-              <li>✓ F12 ile DevTools açma</li>
-              <li>✓ Sağ tık ile Inspect Element</li>
-              <li>✓ Konsol debug logları</li>
-              <li>✓ API çağrı detayları</li>
+              <li>✓ {{ t('settings.devToolsF12') }}</li>
+              <li>✓ {{ t('settings.rightClickInspect') }}</li>
+              <li>✓ {{ t('settings.consoleDebugLogs') }}</li>
+              <li>✓ {{ t('settings.apiCallDetails') }}</li>
             </ul>
+          </div>
+          
+          <!-- Log Buffer Size -->
+          <div v-if="settings.developerMode" class="setting-group" style="margin-top: 1rem;">
+            <label class="setting-label">{{ t('settings.consoleCacheSize') }}</label>
+            <p class="setting-desc">{{ t('settings.consoleCacheSizeDesc') }}</p>
+            <AutocompleteSelect
+              :model-value="settings.logBufferSize"
+              @update:model-value="v => { settings.logBufferSize = Number(v); saveSettings(); updateLogBufferSize(v) }"
+              :items="logBufferOptions"
+              :placeholder="t('common.select')"
+            />
           </div>
         </div>
       </div>
@@ -222,21 +355,48 @@
 </template>
 
 <script setup>
-import { ref, h, onMounted } from 'vue'
+import { ref, h, onMounted, computed } from 'vue'
 import { useSettings } from '../composables/useSettings'
+import { useI18n } from '../i18n'
 import { api } from '../api'
 import AutocompleteSelect from './AutocompleteSelect.vue'
 
 defineEmits(['close'])
 
 const { settings, changelog, saveSettings, setTheme } = useSettings()
+const { t, locale, setLocale } = useI18n()
 
 const activeTab = ref('general')
 // Derive current version and status from changelog (first entry)
-const currentVersion = changelog && changelog.length > 0 ? changelog[0].version : 'N/A'
-const currentStatus = changelog && changelog.length > 0 ? (Array.isArray(changelog[0].status) ? changelog[0].status : [changelog[0].status]) : []
-const currentDate = changelog && changelog.length > 0 ? changelog[0].date : ''
+const currentVersion = computed(() => {
+  const ver = changelog?.value && changelog.value.length > 0 ? changelog.value[0].version : 'N/A'
+  return typeof ver === 'string' ? ver.replace(/^v/i, '') : 'N/A'
+})
+
+const currentStatus = computed(() => {
+  if (!changelog?.value || changelog.value.length === 0) return []
+  const s = changelog.value[0].status
+  return Array.isArray(s) ? s : [s]
+})
+
+const currentDate = computed(() => (changelog?.value && changelog.value.length > 0) ? changelog.value[0].date : '')
 const restartRequired = ref(false)
+
+// Update check state
+const checkingUpdate = ref(false)
+const updateInfo = ref(null)
+
+// Format changelog text with basic markdown support
+const formatChangelog = (text) => {
+  if (!text) return ''
+  // Bold: **text** or __text__ -> <strong>text</strong>
+  let formatted = text.replace(/(\*\*|__)(.*?)\1/g, '<strong>$2</strong>')
+  // Italic: *text* or _text_ -> <em>text</em>
+  formatted = formatted.replace(/(\*|_)(.*?)\1/g, '<em>$2</em>')
+  // Code: `text` -> <code>text</code>
+  formatted = formatted.replace(/`(.*?)`/g, '<code>$1</code>')
+  return formatted
+}
 
 // Load developer mode from backend on mount
 onMounted(async () => {
@@ -250,6 +410,54 @@ onMounted(async () => {
   }
 })
 
+// Check for updates
+async function checkUpdate() {
+  checkingUpdate.value = true
+  updateInfo.value = null
+  
+  try {
+    const result = await api.checkForUpdates()
+    updateInfo.value = result
+  } catch (e) {
+    updateInfo.value = { error: e.message || 'Güncelleme kontrolü başarısız' }
+  } finally {
+    checkingUpdate.value = false
+  }
+}
+
+// Format date helper
+function formatDate(dateStr) {
+  try {
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('tr-TR', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })
+  } catch {
+    return dateStr
+  }
+}
+
+// Log buffer size options
+const logBufferOptions = [
+  { label: '100', value: 100 },
+  { label: '250', value: 250 },
+  { label: '500', value: 500 },
+  { label: '1000', value: 1000 },
+  { label: '2500', value: 2500 },
+  { label: '5000', value: 5000 }
+]
+
+// Update log buffer size
+async function updateLogBufferSize(size) {
+  try {
+    await api.setLogBufferSize(Number(size))
+    console.info('[Settings] Log buffer boyutu güncellendi:', size)
+  } catch (e) {
+    console.error('[Settings] Log buffer boyutu güncellenemedi:', e)
+  }
+}
 // Handle developer mode change
 async function handleDeveloperModeChange() {
   saveSettings()
@@ -278,26 +486,32 @@ const unitOptions = [
   { label: 'Paket', value: 'paket' }
 ]
 
-// Status label helper
+const currencyOptions = [
+  { label: '₺ - TRY', value: 'TRY' },
+  { label: '$ - USD', value: 'USD' },
+  { label: '€ - EUR', value: 'EUR' }
+]
+
+// Status label helper - i18n desteği ile
 function getStatusLabel(status) {
   const labels = {
-    'release': 'Son Sürüm',
-    'stable': 'Kararlı',
-    'unstable': 'Geliştirme',
-    'latest': 'En Son',
-    'compatible': 'Uyumlu',
-    'incompatible': 'Uyumsuz',
-    'first': 'İlk Sürüm',
-    'pre-release': 'Ön Sürüm'
+    'release': t('status.stable'),
+    'stable': t('status.stable'),
+    'unstable': t('status.dev'),
+    'latest': t('status.latest'),
+    'compatible': t('status.compatible'),
+    'incompatible': t('status.incompatible'),
+    'first': t('status.firstRelease'),
+    'pre-release': t('status.beta')
   }
   return labels[status] || status
 }
 
 // Tab configuration with inline SVG icons
-const tabs = [
+const tabs = computed(() => [
   { 
     id: 'general', 
-    label: 'Genel',
+    label: t('settings.tabs.general'),
     icon: {
       render: () => h('svg', { 
         xmlns: 'http://www.w3.org/2000/svg', 
@@ -315,7 +529,7 @@ const tabs = [
   },
   { 
     id: 'appearance', 
-    label: 'Görünüm',
+    label: t('settings.tabs.appearance'),
     icon: {
       render: () => h('svg', { 
         xmlns: 'http://www.w3.org/2000/svg', 
@@ -340,7 +554,7 @@ const tabs = [
   },
   { 
     id: 'about', 
-    label: 'Hakkında',
+    label: t('settings.tabs.about'),
     icon: {
       render: () => h('svg', { 
         xmlns: 'http://www.w3.org/2000/svg', 
@@ -359,7 +573,7 @@ const tabs = [
   },
   { 
     id: 'developer', 
-    label: 'Geliştirici',
+    label: t('settings.tabs.developer'),
     icon: {
       render: () => h('svg', { 
         xmlns: 'http://www.w3.org/2000/svg', 
@@ -376,7 +590,7 @@ const tabs = [
       ])
     }
   }
-]
+])
 </script>
 
 <style scoped>
@@ -906,5 +1120,132 @@ const tabs = [
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* Update Section Styles */
+.update-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+}
+
+.update-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.update-header h4 {
+  margin: 0;
+  font-size: 0.938rem;
+  color: var(--text-primary);
+}
+
+.check-update-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.813rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.check-update-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.check-update-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.check-update-btn .spin {
+  animation: spin 1s linear infinite;
+}
+
+.update-status {
+  padding: 0.875rem;
+  border-radius: 0.5rem;
+  background: var(--bg-primary);
+}
+
+.update-status.has-update {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.update-available, .update-current, .update-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.update-available svg {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.update-current svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.update-error svg {
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.update-error span {
+  color: #ef4444;
+}
+
+.update-details strong {
+  display: block;
+  color: #10b981;
+  margin-bottom: 0.25rem;
+}
+
+.update-details p {
+  margin: 0 0 0.25rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.update-details small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.625rem 1rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.813rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.download-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
 }
 </style>

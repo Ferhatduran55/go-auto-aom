@@ -7,7 +7,7 @@
           <div class="w-10 h-10 bg-gradient-to-r from-accent to-purple-500 rounded-xl flex items-center justify-center text-white">
             📍
           </div>
-          <h3 class="text-lg font-bold">Durum Güncelle</h3>
+          <h3 class="text-lg font-bold">{{ t('whatsapp.statusModal.title') }}</h3>
         </div>
         <button @click="$emit('close')" class="text-2xl hover:opacity-70 transition-opacity">✕</button>
       </div>
@@ -15,9 +15,9 @@
       <!-- Body -->
       <div class="modal-body">
         <div class="form-group mb-4">
-          <label class="form-label">Yeni Durum</label>
+          <label class="form-label">{{ t('whatsapp.statusModal.newStatus') }}</label>
           <select v-model="selectedStatus" class="form-input">
-            <option value="">Durum Seçin...</option>
+            <option value="">{{ t('whatsapp.statusModal.selectStatus') }}</option>
             <option 
               v-for="(info, key) in ORDER_STATUSES" 
               :key="key" 
@@ -29,11 +29,11 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Not (opsiyonel)</label>
+          <label class="form-label">{{ t('whatsapp.statusModal.note') }}</label>
           <textarea 
             v-model="statusNote"
             rows="3"
-            placeholder="Durum hakkında not ekleyin..."
+            :placeholder="t('whatsapp.statusModal.notePlaceholder')"
             class="form-input resize-none"
           ></textarea>
         </div>
@@ -42,15 +42,15 @@
       <!-- Footer -->
       <div class="modal-footer">
         <button @click="$emit('close')" class="btn btn-secondary">
-          İptal
+          {{ t('whatsapp.statusModal.cancel') }}
         </button>
         <button 
           @click="handleSave" 
           :disabled="!selectedStatus || saving"
           class="btn btn-primary"
         >
-          <span v-if="saving">Kaydediliyor...</span>
-          <span v-else>💾 Kaydet</span>
+          <span v-if="saving">{{ t('whatsapp.statusModal.saving') }}</span>
+          <span v-else>💾 {{ t('whatsapp.statusModal.save') }}</span>
         </button>
       </div>
     </div>
@@ -60,6 +60,9 @@
 <script setup>
 import { ref } from 'vue'
 import { useWhatsAppOrders, ORDER_STATUSES } from '@/composables/useWhatsAppOrders'
+import { useI18n } from '@/i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   orderId: {
@@ -85,10 +88,10 @@ async function handleSave() {
     if (result.success) {
       emit('saved')
     } else {
-      console.error('Durum eklenemedi:', result.error)
+      console.error(t('whatsapp.statusModal.error', { error: result.error }))
     }
   } catch (e) {
-    console.error('Hata:', e)
+    console.error(t('whatsapp.statusModal.genericError', { error: e }))
   } finally {
     saving.value = false
   }

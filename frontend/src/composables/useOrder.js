@@ -1,5 +1,6 @@
 import { ref, computed, watch } from 'vue'
 import { api } from '@/api'
+import { t } from '@/i18n'
 
 // Reaktif state
 const products = ref([])
@@ -58,14 +59,14 @@ function checkForChanges() {
     hasUnsavedChanges.value = products.value.length > 0
     return
   }
-  
+
   const currentState = JSON.stringify({
     products: products.value,
     orderTitle: orderTitle.value,
     customerName: customerName.value,
     customerPhone: customerPhone.value
   })
-  
+
   hasUnsavedChanges.value = currentState !== lastSavedState.value
 }
 
@@ -85,7 +86,7 @@ const isEditing = computed(() => currentOrderId.value !== null)
 async function loadData() {
   try {
     loadSettings() // Load settings too
-    
+
     const [customers, prods] = await Promise.all([
       api.listCustomers(),
       api.listProducts()
@@ -100,28 +101,28 @@ async function loadData() {
 // OEM çakışma kontrolü
 function checkOEMConflict(name, oem) {
   if (!oem || oem === '-') return null
-  
+
   // Bu kombinasyon zaten kayıtlı mı?
-  const exactMatch = allProducts.value.find(p => 
-    p.oem_number?.toLowerCase() === oem.toLowerCase() && 
+  const exactMatch = allProducts.value.find(p =>
+    p.oem_number?.toLowerCase() === oem.toLowerCase() &&
     p.name.toLowerCase() === name.toLowerCase()
   )
-  
+
   if (exactMatch) return null // Çakışma yok
-  
+
   // Aynı OEM farklı isimle kayıtlı mı?
-  const existingProduct = allProducts.value.find(p => 
-    p.oem_number?.toLowerCase() === oem.toLowerCase() && 
+  const existingProduct = allProducts.value.find(p =>
+    p.oem_number?.toLowerCase() === oem.toLowerCase() &&
     p.name.toLowerCase() !== name.toLowerCase()
   )
-  
+
   return existingProduct || null
 }
 
 // Ürün ekleme
 function addProduct(productData) {
   const { name, oem, quantity, unitPrice, partStatus } = productData
-  
+
   products.value.push({
     id: Date.now().toString(),
     product_name: name,
@@ -163,7 +164,7 @@ function deleteProduct(id) {
 // Sipariş kaydetme
 async function saveOrder() {
   if (products.value.length === 0) {
-    return { error: 'Liste boş' }
+    return { error: t('toasts.listEmpty') }
   }
 
   const orderData = {
@@ -176,24 +177,24 @@ async function saveOrder() {
   }
 
   const result = await api.saveOrder(orderData)
-  
+
   if (!result.error) {
     currentOrderId.value = result.id
     if (result.customer_id) {
       currentCustomerId.value = result.customer_id
     }
-    
+
     // Kaydet sonrası snapshot al
     saveSnapshot()
-    
+
     // Auto deduct stock if enabled
     if (settings.value.autoDeductStock) {
       await deductStock()
     }
-    
+
     await loadData()
   }
-  
+
   return result
 }
 
@@ -201,14 +202,14 @@ async function saveOrder() {
 async function deductStock() {
   // Prepare bulk stock out
   const bulkOut = []
-  
+
   for (const item of products.value) {
     // Find product in catalog (by OEM or name)
-    const catalogProduct = allProducts.value.find(p => 
+    const catalogProduct = allProducts.value.find(p =>
       p.oem_number?.toLowerCase() === item.oem_number?.toLowerCase() ||
       p.name.toLowerCase() === item.product_name.toLowerCase()
     )
-    
+
     if (catalogProduct && catalogProduct.id) {
       bulkOut.push({
         product_id: catalogProduct.id,
@@ -216,7 +217,7 @@ async function deductStock() {
       })
     }
   }
-  
+
   if (bulkOut.length > 0) {
     const note = `Order: ${orderTitle.value || 'Unnamed'} - ${customerName.value || 'No customer'}`
     try {
@@ -231,7 +232,7 @@ async function deductStock() {
 // Sipariş yükleme
 async function loadOrder(orderId) {
   const order = await api.loadOrderById(orderId)
-  
+
   if (order.error) {
     return { error: order.error }
   }
@@ -240,7 +241,7 @@ async function loadOrder(orderId) {
   currentCustomerId.value = order.customer_id || null
   orderTitle.value = order.title || ''
   customerName.value = order.customer_name || ''
-  
+
   // Müşterinin telefon numarasını al
   if (order.customer_id) {
     const customer = allCustomers.value.find(c => c.id === order.customer_id)
@@ -248,7 +249,7 @@ async function loadOrder(orderId) {
   } else {
     customerPhone.value = ''
   }
-  
+
   products.value = (order.items || []).map((item, i) => ({
     id: item.id || (Date.now() + i).toString(),
     product_name: item.product_name,
@@ -275,7 +276,7 @@ function resetOrder() {
   customerPhone.value = ''
   editingProductId.value = null
   customerFilterActive.value = false // Filtreyi kapat
-  
+
   // Reset sonrası snapshot temizle
   lastSavedState.value = null
   hasUnsavedChanges.value = false
@@ -302,11 +303,11 @@ export function useOrder() {
     advancedSearchFilter,
     settings,
     hasUnsavedChanges,
-    
+
     // Computed
     grandTotal,
     isEditing,
-    
+
     // Methods
     loadData,
     checkOEMConflict,

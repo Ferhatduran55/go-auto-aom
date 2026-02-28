@@ -428,5 +428,153 @@ export const api = {
       return JSON.parse(result) || []
     }
     return []
+  },
+
+  // ==================== Güncelleme İşlemleri ====================
+
+  async checkForUpdates() {
+    if (typeof checkForUpdates !== 'undefined') {
+      try {
+        const result = await checkForUpdates()
+        return JSON.parse(result)
+      } catch (e) {
+        console.error('[API] checkForUpdates error:', e)
+        return { error: e.message }
+      }
+    }
+    return { error: 'API not available' }
+  },
+
+  async getAppVersion() {
+    if (typeof window.getAppVersion !== 'undefined') {
+      try {
+        return await window.getAppVersion()
+      } catch (e) {
+        console.error('[API] getAppVersion error:', e)
+        return typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
+      }
+    }
+    return typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0'
+  },
+
+  // ==================== Log İşlemleri ====================
+
+  async getBackendLogs() {
+    if (typeof getBackendLogs !== 'undefined') {
+      try {
+        const result = await getBackendLogs()
+        return JSON.parse(result)
+      } catch (e) {
+        console.error('[API] getBackendLogs error:', e)
+        return []
+      }
+    }
+    return []
+  },
+
+  async getBackendLogsAfterId(afterId) {
+    if (typeof getBackendLogsAfterId !== 'undefined') {
+      try {
+        const result = await getBackendLogsAfterId(afterId)
+        return JSON.parse(result)
+      } catch (e) {
+        console.error('[API] getBackendLogsAfterId error:', e)
+        return []
+      }
+    }
+    return []
+  },
+
+  async clearBackendLogs() {
+    if (typeof clearBackendLogs !== 'undefined') {
+      try {
+        const result = await clearBackendLogs()
+        return JSON.parse(result)
+      } catch (e) {
+        console.error('[API] clearBackendLogs error:', e)
+        return { success: false }
+      }
+    }
+    return { success: false }
+  },
+
+  async setLogBufferSize(size) {
+    if (typeof setLogBufferSize !== 'undefined') {
+      try {
+        const result = await setLogBufferSize(size)
+        return JSON.parse(result)
+      } catch (e) {
+        console.error('[API] setLogBufferSize error:', e)
+        return { success: false }
+      }
+    }
+    return { success: false }
+  },
+
+  async getLogBufferSize() {
+    if (typeof getLogBufferSize !== 'undefined') {
+      try {
+        const result = await getLogBufferSize()
+        return JSON.parse(result)
+      } catch (e) {
+        console.error('[API] getLogBufferSize error:', e)
+        return { size: 1000, count: 0 }
+      }
+    }
+    return { size: 1000, count: 0 }
+  },
+
+  // ==================== Sistem İşlemleri ====================
+
+  async getSystemInfo() {
+    if (typeof getSystemInfo !== 'undefined') {
+      try {
+        const result = await getSystemInfo()
+        return JSON.parse(result)
+      } catch (e) {
+        console.error('[API] getSystemInfo error:', e)
+        return null
+      }
+    }
+    return null
+  },
+
+  async exportAllData() {
+    if (typeof exportAllData !== 'undefined') {
+      try {
+        const result = await exportAllData()
+        return result // JSON string olarak döner
+      } catch (e) {
+        console.error('[API] exportAllData error:', e)
+        return null
+      }
+    }
+    return null
+  },
+
+  async copySystemInfo() {
+    if (typeof copySystemInfo !== 'undefined') {
+      try {
+        return await copySystemInfo()
+      } catch (e) {
+        console.error('[API] copySystemInfo error:', e)
+        return null
+      }
+    }
+    return null
+  },
+
+  async clearCache() {
+    if (typeof clearCache !== 'undefined') {
+      try {
+        const result = await clearCache()
+        return JSON.parse(result)
+      } catch (e) {
+        console.error('[API] clearCache error:', e)
+        return { success: false, error: e.message }
+      }
+    }
+    return { success: false, error: 'API not available' }
   }
 }
+

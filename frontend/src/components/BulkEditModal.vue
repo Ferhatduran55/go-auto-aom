@@ -6,7 +6,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
           </svg>
-          Toplu Ürün Düzenleme
+          {{ t('products.bulkEdit') }}
         </h2>
         <button @click="$emit('close')" class="close-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -23,13 +23,13 @@
             <path d="M12 16v-4"></path>
             <path d="M12 8h.01"></path>
           </svg>
-          <span><strong>{{ products.length }}</strong> ürün için ortak değerler düzenlenecek. Boş bırakılan alanlar değiştirilmeyecek.</span>
+          <span><strong>{{ products.length }}</strong> {{ t('products.bulkEditInfo') }}</span>
         </div>
         
         <!-- Selected Products List -->
         <div class="selected-products">
           <div class="selected-header" @click="showProductList = !showProductList">
-            <span>Seçili Ürünler</span>
+            <span>{{ t('products.selectedProducts') }}</span>
             <svg :class="{ 'rotate': showProductList }" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="m6 9 6 6 6-6"/>
             </svg>
@@ -47,13 +47,13 @@
           <div class="form-group">
             <label>
               <input type="checkbox" v-model="updateFields.category" />
-              Kategori
+              {{ t('products.category') }}
             </label>
             <AutocompleteSelect
               v-if="updateFields.category"
               v-model="form.category"
               :items="categoryOptions"
-              placeholder="Kategori seçin..."
+              :placeholder="t('products.selectCategory')"
               :allow-create="true"
               @create="handleNewCategory"
             />
@@ -63,13 +63,13 @@
           <div class="form-group">
             <label>
               <input type="checkbox" v-model="updateFields.brand" />
-              Marka
+              {{ t('products.brand') }}
             </label>
             <AutocompleteSelect
               v-if="updateFields.brand"
               v-model="form.brand"
               :items="brandOptions"
-              placeholder="Marka seçin..."
+              :placeholder="t('products.selectBrand')"
               :allow-create="true"
               @create="handleNewBrand"
             />
@@ -79,13 +79,13 @@
           <div class="form-group">
             <label>
               <input type="checkbox" v-model="updateFields.unit" />
-              Birim
+              {{ t('common.unit') }}
             </label>
             <AutocompleteSelect
               v-if="updateFields.unit"
               v-model="form.unit"
               :items="unitOptions"
-              placeholder="Birim seçin..."
+              :placeholder="t('products.selectUnit')"
               :show-search-icon="false"
             />
           </div>
@@ -94,7 +94,7 @@
           <div class="form-group">
             <label>
               <input type="checkbox" v-model="updateFields.critical_stock" />
-              Kritik Stok Seviyesi
+              {{ t('stock.criticalLevel') }}
             </label>
             <input 
               v-if="updateFields.critical_stock"
@@ -102,7 +102,7 @@
               v-model.number="form.critical_stock" 
               class="form-input"
               min="1"
-              placeholder="Kritik stok seviyesi"
+              :placeholder="t('stock.criticalLevel')"
             />
           </div>
         </div>
@@ -119,33 +119,33 @@
         
         <!-- Preview -->
         <div v-if="hasUpdates" class="preview-section">
-          <h4>Yapılacak Değişiklikler</h4>
+          <h4>{{ t('products.changesToBeMade') }}</h4>
           <ul class="changes-list">
             <li v-if="updateFields.category && form.category">
-              <strong>Kategori:</strong> {{ form.category }}
+              <strong>{{ t('products.category') }}:</strong> {{ form.category }}
             </li>
             <li v-if="updateFields.brand && form.brand">
-              <strong>Marka:</strong> {{ form.brand }}
+              <strong>{{ t('products.brand') }}:</strong> {{ form.brand }}
             </li>
             <li v-if="updateFields.unit && form.unit">
-              <strong>Birim:</strong> {{ unitLabel(form.unit) }}
+              <strong>{{ t('common.unit') }}:</strong> {{ unitLabel(form.unit) }}
             </li>
             <li v-if="updateFields.critical_stock && form.critical_stock">
-              <strong>Kritik Stok:</strong> {{ form.critical_stock }}
+              <strong>{{ t('stock.criticalLevel') }}:</strong> {{ form.critical_stock }}
             </li>
           </ul>
         </div>
       </div>
       
       <div class="modal-footer">
-        <button @click="$emit('close')" class="btn btn-secondary">İptal</button>
+        <button @click="$emit('close')" class="btn btn-secondary">{{ t('common.cancel') }}</button>
         <button 
           @click="save" 
           class="btn btn-primary"
           :disabled="saving || !hasUpdates"
         >
           <span v-if="saving" class="loading-spinner-sm"></span>
-          {{ products.length }} Ürünü Güncelle
+          {{ t('products.updateNProducts', { count: products.length }) }}
         </button>
       </div>
     </div>
@@ -155,8 +155,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useStock } from '../composables/useStock'
+import { useI18n } from '@/i18n'
 import AutocompleteSelect from './AutocompleteSelect.vue'
 
+const { t } = useI18n()
 const props = defineProps({
   products: {
     type: Array,

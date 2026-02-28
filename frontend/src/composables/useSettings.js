@@ -7,15 +7,20 @@ const settings = ref({
   theme: 'dark',
   // Show loadout overlay on every app start (optional)
   showLoadoutAlways: false,
-  
+
   // Stock settings
   autoDeductStock: false,
   defaultUnit: 'adet',
   hideCriticalStockWarning: false, // Kritik stok uyarısını gizle
-  
+  currency: '₺',
+
   // Developer settings
   developerMode: false,
-  
+  logBufferSize: 1000, // Geliştirici konsolunda tutulacak log sayısı
+
+  // Update settings
+  autoUpdateCheck: true, // Uygulama açılışında otomatik güncelleme kontrolü
+
   // Table columns visibility
   stockListColumns: {
     name: true,
@@ -34,23 +39,23 @@ const isLoaded = ref(false)
 // Load settings from localStorage
 function loadSettings() {
   if (isLoaded.value) return
-  
+
   try {
     const saved = localStorage.getItem('appSettings')
     if (saved) {
       const parsed = JSON.parse(saved)
       settings.value = { ...settings.value, ...parsed }
     }
-    
+
     // Also load theme from old key for backward compatibility
     const savedTheme = localStorage.getItem('theme')
     if (savedTheme) {
       settings.value.theme = savedTheme
     }
-    
+
     // Apply theme
     document.documentElement.classList.toggle('dark', settings.value.theme === 'dark')
-    
+
     isLoaded.value = true
   } catch (e) {
     console.error('Settings load error:', e)
@@ -105,104 +110,25 @@ watch(settings, () => {
   }
 }, { deep: true })
 
-// Changelog data for About section
-// Status types (can be array for multiple badges):
-// - release: Son Sürüm (purple)
-// - stable: Kararlı (green)
-// - unstable: Geliştirme (red)
-// - latest: En Son (blue)
-// - compatible: Uyumlu (teal)
-// - incompatible: Uyumsuz (orange)
-// - first: İlk Sürüm (gray)
-// - pre-release: Ön Sürüm (amber)
-const changelog = [
-  {
-    version: '26.1.2',
-    status: ['latest', 'pre-release', 'unstable'],
-    date: '2026-01-08',
-    changes: [
-      'Hızlı sipariş desteği eklendi',
-      'Notlar özelliği: not oluşturma, düzenleme, silme ve arama; çeşitli hata düzeltmeleri',
-      'Diğer küçük iyileştirmeler ve kararlılık düzeltmeleri'
-    ]
-  },
-  {
-    version: '26.1.1',
-    status: ['pre-release', 'unstable'],
-    date: '2026-01-06',
-    changes: [
-      'Notlar (quick notes) özelliği eklendi: not oluşturma, düzenleme, silme ve arama',
-      'Notlar için frontend bileşenleri ve stil eklendi (not listesi, editör, UI iyileştirmeleri)',
-      'Metin otomatik formatlama ve çeşitli küçük hata düzeltmeleri'
-    ]
-  },
-  {
-    version: '25.12.3',
-    status: ['incompatible'],
-    date: '2025-12-29',
-    changes: [
-      'Bleve index adı `auto_management_index` olarak değiştirildi',
-      'Legacy migration tamamen kaldırıldı',
-      'Loadout ekranı yeniden tasarlandı; spinner eklendi ve UI yükleme tamamlanana kadar içerik gizleniyor',
-      'Frontend template fix ve kritik build hataları düzeltildi',
-      'Genel kararlılık ve sürüm güncellemesi'
-    ]
-  },
-  {
-    version: '25.12.2',
-    status: ['pre-release', 'unstable'],
-    date: '2025-12-29',
-    changes: [
-      'Yeni kayıt sırasında input artık boşalmıyor ve v-model hemen güncelleniyor',
-      'Yeni oluşturulan kategori/marka uygulama listelerine ekleniyor',
-      'Loadout screen eklendi'
-    ]
-  },
-  {
-    version: '25.12.1',
-    status: ['pre-release', 'unstable'],
-    date: '2025-12-29',
-    changes: [
-      'Stok ve Raporlama sistemi',
-      'Tüm select elementleri için AutocompleteSelect bileşeni',
-      'Toplu ürün düzenleme',
-      'Stok giriş/çıkış modallarında autocomplete ürün seçimi',
-      'Kategori, marka ve birim için akıllı dropdown',
-      'Stok listesinde sütun sıralama ve gizleme',
-      'CSV export özelliği',
-      'Server-side pagination ile performans optimizasyonu',
-      'Ayarlar modalı ve tema yönetimi',
-      'Uygulama adı AutoManagement olarak güncellendi'
-    ]
-  },
-  {
-    version: '25.12',
-    status: ['first', 'incompatible'],
-    date: '2025-12-24',
-    changes: [
-      'Gelişmiş autocomplete bileşeni',
-      'Sipariş kalemlerinde içerik arama, gizlenen ürün sayısı',
-      'Sipariş Yönetiminde Çoklu seçim ve silme',
-      'WhatsApp\'a resim kopyalama',
-    ]
-  },
-  {
-    version: '25.11',
-    status: ['pre-release', 'unstable'],
-    date: '2025-11-15',
-    changes: [
-      'Gelişmiş arama + tarih filtresi birlikte çalışır',
-      'Tema uyumlu toast ve dropdown',
-      'Sipariş Yönetim sistemi',
-      'Karanlık/aydınlık tema desteği'
-    ]
-  }
-]
+// Changelog is provided by i18n locales as `settings.changelogEntries` (so it becomes locale-aware)
+import { computed } from 'vue'
+import { useI18n } from '../i18n'
+
+// changelog will be a computed value returning an array from the current locale
+function getLocalizedChangelog() {
+  const { t } = useI18n()
+  return computed(() => {
+    const val = t('settings.changelogEntries')
+    return Array.isArray(val) ? val : []
+  })
+}
+
+const changelog = getLocalizedChangelog()
 
 export function useSettings() {
   // Auto-load on first use
   loadSettings()
-  
+
   return {
     settings,
     changelog,
